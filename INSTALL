@@ -1,0 +1,9 @@
+Building Monocle
+
+See doc/readme-qt.rst for instructions on building Monocle,
+the intended-for-end-users, nice-graphical-interface, reference
+implementation of Monocle.
+
+See doc/build-*.txt for instructions on building monocled,
+the intended-for-services, no-graphical-interface, reference
+implementation of Monocle.
