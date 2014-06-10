@@ -11,7 +11,6 @@
 #include <array>
 #include <utility>
 #include <secp256k1.h>
-#include <random>
 
 
 #include "base58.h"
@@ -19,9 +18,9 @@
 constexpr size_t ec_secret_size = 32;
 constexpr size_t ec_compressed_size = 33;
 constexpr size_t ec_uncompressed_size = 65;
-template<size_t Size> using byte_array = std::array<uint8_t, Size>;
+//template<size_t Size> using byte_array = std::array<uint8_t, Size>;
 typedef std::vector<uint8_t> data_chunk;
-typedef byte_array<ec_secret_size> ec_secret;
+typedef std::array<uint8_t, ec_secret_size> ec_secret;
 typedef data_chunk ec_point;
 constexpr uint8_t stealth_version_byte = 0x2a;
 constexpr size_t short_hash_size = 20;
@@ -29,9 +28,9 @@ constexpr size_t hash_size = 32;
 constexpr size_t long_hash_size = 64;
 
 // Standard hash containers.
-typedef byte_array<short_hash_size> short_hash;
-typedef byte_array<hash_size> hash_digest;
-typedef byte_array<long_hash_size> long_hash;
+typedef std::array<uint8_t, short_hash_size> short_hash;
+typedef std::array<uint8_t, hash_size> hash_digest;
+typedef std::array<uint8_t, long_hash_size> long_hash;
 
 typedef uint32_t stealth_bitfield;
 
@@ -70,10 +69,10 @@ T from_little_endian(Iterator in)
 }
 
 template <typename T>
-byte_array<sizeof(T)> to_big_endian(T n)
+std::array<uint8_t, sizeof(T)> to_big_endian(T n)
 {
     VERIFY_UNSIGNED(T);
-    byte_array<sizeof(T)> out;
+    std::array<uint8_t, sizeof(T)> out;
     for (auto i = out.rbegin(); i != out.rend(); ++i)
     {
         *i = n;
@@ -83,10 +82,10 @@ byte_array<sizeof(T)> to_big_endian(T n)
 }
 
 template <typename T>
-byte_array<sizeof(T)> to_little_endian(T n)
+std::array<uint8_t, sizeof(T)> to_little_endian(T n)
 {
     VERIFY_UNSIGNED(T);
-    byte_array<sizeof(T)> out;
+    std::array<uint8_t, sizeof(T)> out;
     for (auto i = out.begin(); i != out.end(); ++i)
     {
         *i = n;
@@ -120,11 +119,11 @@ struct stealth_address
     bool set_encoded(const std::string& encoded_address);
     std::string encoded() const;
 
-    uint8_t options = 0;
+    uint8_t options;
     ec_point scan_pubkey;
     pubkey_list spend_pubkeys;
-    size_t number_signatures = 0;
-    stealth_prefix prefix{0, 0};
+    size_t number_signatures;
+    stealth_prefix prefix;
 };
 
 
@@ -179,7 +178,8 @@ ec_point initiate_stealth(
 short_hash bitcoin_short_hash(const data_chunk& chunk);
 
 const short_hash null_short_hash = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
 
 class payment_address
 {
@@ -213,8 +213,8 @@ public:
    std::string encoded() const;
 
 private:
-    uint8_t version_ = invalid_version;
-    short_hash hash_ = null_short_hash;
+    uint8_t version_;
+    short_hash hash_;
 };
 
 void set_public_key(payment_address& address, const data_chunk& public_key);

@@ -1,7 +1,9 @@
 #include "stealth.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/random_device.hpp>
 
 hash_digest bitcoin_hash(const data_chunk& chunk)
 {
@@ -109,11 +111,13 @@ bool stealth_address::set_encoded(const std::string& encoded_address)
 
 ec_secret generate_random_secret()
 {
-    std::random_device random;
-    std::default_random_engine engine(random());
+    using namespace boost::random;
+    random_device rd;
+    mt19937 generator(rd());
+    uniform_int_distribution<uint8_t> dist(0, std::numeric_limits<uint8_t>::max());
     ec_secret secret;
     for (uint8_t& byte: secret)
-        byte = engine() % std::numeric_limits<uint8_t>::max();
+        byte = dist(generator);
     return secret;
 }
 
@@ -201,17 +205,19 @@ void set_public_key(payment_address& address, const data_chunk& public_key)
         bitcoin_short_hash(public_key));
 }
 
-payment_address::payment_address()
+payment_address::payment_address() : version_(invalid_version), hash_(null_short_hash) 
 {
 }
+
 payment_address::payment_address(uint8_t version, const short_hash& hash)
-  : payment_address()
 {
+    payment_address();
     set(version, hash);
 }
+
 payment_address::payment_address(const std::string& encoded_address)
-  : payment_address()
 {
+    payment_address();
     set_encoded(encoded_address);
 }
 

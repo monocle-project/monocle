@@ -38,6 +38,7 @@ LIBS += \
    -l boost_filesystem$(BOOST_LIB_SUFFIX) \
    -l boost_program_options$(BOOST_LIB_SUFFIX) \
    -l boost_thread$(BOOST_LIB_SUFFIX) \
+   -l boost_random$(BOOST_LIB_SUFFIX) \
    -l db_cxx$(BDB_LIB_SUFFIX) \
    -l ssl \
    -l crypto
@@ -163,7 +164,7 @@ test check: test_monocle FORCE
 # LevelDB support
 #
 MAKEOVERRIDES =
-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a /usr/local/lib/libsecp256k1.a /usr/lib/x86_64-linux-gnu/libgmp.a
+LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a $(SECP_PATH)/lib/libsecp256k1.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
 leveldb/libleveldb.a:
