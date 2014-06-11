@@ -511,6 +511,7 @@ public:
         while (GetOp(pc, opcode));
         return nFound;
     }
+
     int Find(opcodetype op) const
     {
         int nFound = 0;

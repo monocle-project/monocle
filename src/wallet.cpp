@@ -1497,14 +1497,8 @@ bool CWallet::CreateTransactionWithStealth(const vector<pair<CScript, int64> >& 
                 else
                     reservekey.ReturnKey();
 
-                /*
-                 *
-                 *  Adding ephem_pubkey key to blockchain.
-                 *
-                 */
 
-                data_chunk stealth_metadata{{OP_RETURN, 0x06, 0x00, 0x00, 0x00, 0x00}};
-                //ec_secret ephem_secret = {0x9e, 0x63, 0xab, 0xaf, 0x8d, 0xcd, 0x5e, 0xa3, 0x91, 0x9e, 0x6d, 0xe0, 0xb6, 0xc5, 0x44, 0xe0, 0x0b, 0xf5, 0x1b, 0xf9, 0x24, 0x96, 0x11, 0x3a, 0x01, 0xd6, 0xe3, 0x69, 0x94, 0x4d, 0xc0, 0x91};
+                data_chunk stealth_metadata{{OP_RETURN, nonce_version, 0x00, 0x00, 0x00, 0x00}};
                 ec_point ephem_pubkey = secret_to_public_key(ephem_secret, true);
                 extend_data(stealth_metadata, ephem_pubkey);
                 CScript sxScript(stealth_metadata);

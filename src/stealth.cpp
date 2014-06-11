@@ -67,14 +67,14 @@ bool stealth_address::set_encoded(const std::string& encoded_address)
     DecodeBase58(encoded_address, raw_addr);
     if (!verify_checksum(raw_addr))
         return false;
-    //BITCOIN_ASSERT(raw_addr.size() >= 4);
+    assert(raw_addr.size() >= 4);
     auto checksum_begin = raw_addr.end() - 4;
     // Delete checksum bytes.
     raw_addr.erase(checksum_begin, raw_addr.end());
     // https://wiki.unsystem.net/index.php/DarkWallet/Stealth#Address_format
     // [version] [options] [scan_key] [N] ... [Nsigs] [prefix_length] ...
     size_t estimated_data_size = 1 + 1 + 33 + 1 + 1 + 1;
-    //BITCOIN_ASSERT(raw_addr.size() >= estimated_data_size);
+    assert(raw_addr.size() >= estimated_data_size);
     auto iter = raw_addr.begin();
     uint8_t version = *iter;
     if (version != stealth_version_byte)

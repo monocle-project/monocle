@@ -2518,46 +2518,40 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     BOOST_FOREACH(const CTransaction& tx, pblock->vtx){
         vector<CTxOut> vtxOut;
         vtxOut = tx.vout;
-        bool haveStealthTx = false;
+        bool IsStealthTx = false;
 
-        std::string recvAddr;
+        string recvAddr;
         ec_secret scan_secret;
         ec_secret spend_secret;
         ec_point spend_pubkey;
         ec_point ephem_pubkey;
-        std::string ephemPubkey;
+        string ephemPubkey;
 
         // check sx transaction
         for(unsigned int i = 0; i < vtxOut.size(); i++){
             CTxOut txOut;
             txOut = vtxOut[i];
 
+            if(txOut.scriptPubKey[1] == OP_RETURN && txOut.scriptPubKey[2] == nonce_version){
 
-            std::string prefix = txOut.scriptPubKey.ToString().substr(0, 12);
-            if(prefix.compare("6a0600000000") == 0){
-
-                haveStealthTx = true;
+                IsStealthTx = true;
 
                 if (!pwalletMain->IsLocked()){
 
-                    ephemPubkey = txOut.scriptPubKey.ToString().substr(12, 66);
-
-                    std::vector<unsigned char> scanSecret;
-                    std::vector<unsigned char> spendSecret;
+                    vector<unsigned char> scanSecret;
+                    vector<unsigned char> spendSecret;
 
                     if(pwalletMain->GetScanSecret(scanSecret) && pwalletMain->GetSpendSecret(spendSecret))
                     {
 
-
-                        for(unsigned int i=0; i<32; i++)
+                        for(unsigned int i = 0; i < 32; i++)
                         {
                             scan_secret[i] = scanSecret[i];
                             spend_secret[i] = spendSecret[i];
                         }
 
                         spend_pubkey = secret_to_public_key(spend_secret, true);
-                        ephem_pubkey = decode_hex(ephemPubkey);
-
+                        ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 7, txOut.scriptPubKey.end());
                         ec_point uncover_pubkey = uncover_stealth(ephem_pubkey, scan_secret, spend_pubkey);
                         payment_address return_addr;
                         set_public_key(return_addr, uncover_pubkey);
@@ -2570,7 +2564,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         }
 
 
-        if(haveStealthTx){
+        if(IsStealthTx){
             // check match address
             for(unsigned int i = 0; i < vtxOut.size(); i++){
                 CTxOut txOut;
@@ -2585,7 +2579,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     {
 
                         ec_secret secret = uncover_stealth_secret(
-                             ephem_pubkey, scan_secret, spend_secret);
+                                    ephem_pubkey, scan_secret, spend_secret);
 
                         string wif_result = secret_to_wif(secret, true);
 
@@ -2595,7 +2589,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                             string strLabel = ephemPubkey;
 
                             // Whether to perform rescan after import
-                            bool fRescan = true;
+                            bool fRescan = false;
 
                             CBitcoinSecret vchSecret;
                             bool fGood = vchSecret.SetString(strSecret);

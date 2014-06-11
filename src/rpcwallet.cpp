@@ -221,6 +221,84 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
+
+Value sendstealthfrom(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 3 || params.size() > 6)
+        throw runtime_error(
+            "sendfrom <fromaccount> <tomonoclestealthaddress> <amount> [minconf=1] [comment] [comment-to]\n"
+            "<amount> is a real and is rounded to the nearest 0.00000001"
+            + HelpRequiringPassphrase());
+
+    string strAccount = AccountFromValue(params[0]);
+
+    stealth_address recv;
+    if (!recv.set_encoded(params[1].get_str()))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Monocle stealth address");
+
+    bool reuse_key = recv.options & stealth_address::reuse_key_option;
+    // Get our scan and spend pubkeys.
+    const ec_point& recv_scan_pubkey = recv.scan_pubkey;
+    //spend_pubkey = scan_pubkey;
+    ec_point recv_spend_pubkey;
+    if (!reuse_key)
+        recv_spend_pubkey = recv.spend_pubkeys.front();
+    // Do stealth stuff.
+    ec_secret ephem_secret = generate_random_secret();
+
+    std::vector<unsigned char> ephemSecret;
+    for(unsigned int i = 0; i < 32 ; i++)
+    {
+        ephemSecret.push_back(ephem_secret[i]);
+    }
+
+    ec_point addr_pubkey = initiate_stealth(
+        ephem_secret, recv_scan_pubkey, recv_spend_pubkey);
+    ec_point ephem_pubkey = secret_to_public_key(ephem_secret, true);
+
+    CPubKey ephemPubKey;
+    ephemPubKey.Set(ephem_pubkey.begin(),ephem_pubkey.end());
+    // Generate the address.
+    payment_address payaddr;
+    set_public_key(payaddr, addr_pubkey);
+
+
+    CBitcoinAddress address(payaddr.encoded());
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Monocle address");
+
+
+    int64 nAmount = AmountFromValue(params[2]);
+    int nMinDepth = 1;
+    if (params.size() > 3)
+        nMinDepth = params[3].get_int();
+
+    CWalletTx wtx;
+    wtx.strFromAccount = strAccount;
+    if (params.size() > 4 && params[4].type() != null_type && !params[4].get_str().empty())
+        wtx.mapValue["comment"] = params[4].get_str();
+    if (params.size() > 5 && params[5].type() != null_type && !params[5].get_str().empty())
+        wtx.mapValue["to"]      = params[5].get_str();
+
+    wtx.mapValue["ephemsecret"] = HexStr(ephemSecret.begin(), ephemSecret.end());
+
+    EnsureWalletIsUnlocked();
+
+    // Check funds
+    int64 nBalance = GetAccountBalance(strAccount, nMinDepth);
+    if (nAmount > nBalance)
+        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
+
+    // Send
+    string strError = pwalletMain->SendMoneyToStealthDestination(address.Get(), nAmount, wtx, ephem_secret);
+    if (strError != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+
+    return wtx.GetHash().GetHex();
+}
+
+
+
 Value getnewaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)

@@ -14,7 +14,7 @@
 
 
 #include "base58.h"
-
+constexpr uint8_t nonce_version = 0x06;
 constexpr size_t ec_secret_size = 32;
 constexpr size_t ec_compressed_size = 33;
 constexpr size_t ec_uncompressed_size = 65;
@@ -220,6 +220,7 @@ private:
 void set_public_key(payment_address& address, const data_chunk& public_key);
 
 const char base58_chars[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
 
 bool is_base58(const char c);
 bool is_base58(const std::string& text);
