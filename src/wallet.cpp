@@ -1807,54 +1807,6 @@ bool GetWalletFile(CWallet* pwallet, string &strWalletFileOut)
     return true;
 }
 
-
-bool CWallet::SetScanSecret(std::vector<unsigned char> scan_secret)
-{
-    if (fFileBacked)
-    {
-        if (!CWalletDB(strWalletFile).WriteScanSecret(scan_secret))
-            return false;
-    }
-    scanSecret = scan_secret;
-    return true;
-}
-
-bool CWallet::GetScanSecret(std::vector<unsigned char>& scan_secret)
-{
-
-    if (fFileBacked)
-    {
-        if (!CWalletDB(strWalletFile).ReadScanSecret(scan_secret))
-            return false;
-    }
-    return true;
-
-}
-
-bool CWallet::SetSpendSecret(std::vector<unsigned char> spend_secret)
-{
-    if (fFileBacked)
-    {
-        if (!CWalletDB(strWalletFile).WriteSpendSecret(spend_secret))
-            return false;
-    }
-    spendSecret = spend_secret;
-    return true;
-}
-
-bool CWallet::GetSpendSecret(std::vector<unsigned char>& spend_secret)
-{
-
-    if (fFileBacked)
-    {
-        if (!CWalletDB(strWalletFile).ReadSpendSecret(spend_secret))
-            return false;
-    }
-    return true;
-
-}
-
-
 //
 // Mark old keypool keys as used,
 // and generate all new keys
@@ -1908,6 +1860,7 @@ bool CWallet::TopUpKeyPool()
     }
     return true;
 }
+
 
 void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
 {

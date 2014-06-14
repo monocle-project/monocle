@@ -17,6 +17,7 @@
 class CCoins;
 class CTransaction;
 
+static const unsigned int MAX_OP_RETURN_RELAY = 40;      // bytes
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 
 /** Signature hash types/flags */
@@ -45,6 +46,7 @@ enum txnouttype
     TX_PUBKEYHASH,
     TX_SCRIPTHASH,
     TX_MULTISIG,
+    TX_NULL_DATA,
 };
 
 class CNoDestination {
@@ -202,6 +204,7 @@ enum opcodetype
 
 
     // template matching params
+    OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,

@@ -13,6 +13,7 @@
 class CKeyPool;
 class CAccount;
 class CAccountingEntry;
+class CStealthAddressEntry;
 
 /** Error statuses for the wallet database */
 enum DBErrors
@@ -106,29 +107,6 @@ public:
         return Write(std::string("defaultkey"), vchPubKey);
     }
 
-    bool WriteScanSecret(std::vector<unsigned char> scan_secret)
-    {
-        nWalletDBUpdated++;
-        return Write(std::string("scan_secret"), scan_secret, true);
-    }
-
-    bool ReadScanSecret(std::vector<unsigned char>& scan_secret)
-    {
-         return Read(std::string("scan_secret"), scan_secret);
-    }
-
-    bool WriteSpendSecret(std::vector<unsigned char> spend_secret)
-    {
-        nWalletDBUpdated++;
-        return Write(std::string("spend_secret"), spend_secret, true);
-    }
-
-    bool ReadSpendSecret(std::vector<unsigned char>& spend_secret)
-    {
-        return Read(std::string("spend_secret"), spend_secret);
-    }
-
-
     bool ReadPool(int64 nPool, CKeyPool& keypool)
     {
         return Read(std::make_pair(std::string("pool"), nPool), keypool);
@@ -174,10 +152,14 @@ public:
     bool WriteAccount(const std::string& strAccount, const CAccount& account);
 private:
     bool WriteAccountingEntry(const uint64 nAccEntryNum, const CAccountingEntry& acentry);
+    bool WriteStealthAddressEntry(const uint64 nStealthEntryNum, const CStealthAddressEntry& stealthAddress);
 public:
     bool WriteAccountingEntry(const CAccountingEntry& acentry);
     int64 GetAccountCreditDebit(const std::string& strAccount);
     void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
+
+    bool WriteStealthAddressEntry(const CStealthAddressEntry& stealthAddress);
+    void ListStealthAddress(const std::string& strAccount, std::list<CStealthAddressEntry>& listStealthAddress);
 
     DBErrors ReorderTransactions(CWallet*);
     DBErrors LoadWallet(CWallet* pwallet);

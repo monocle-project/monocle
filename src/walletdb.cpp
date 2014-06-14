@@ -15,6 +15,7 @@ using namespace boost;
 
 
 static uint64 nAccountingEntryNumber = 0;
+static uint64 nStealthAddressEntryNumber = 0;
 
 //
 // CWalletDB
@@ -53,6 +54,17 @@ bool CWalletDB::WriteAccountingEntry(const uint64 nAccEntryNum, const CAccountin
 bool CWalletDB::WriteAccountingEntry(const CAccountingEntry& acentry)
 {
     return WriteAccountingEntry(++nAccountingEntryNumber, acentry);
+}
+
+
+bool CWalletDB::WriteStealthAddressEntry(const uint64 nStealthEntryNum, const CStealthAddressEntry& stealthAddress)
+{
+    return Write(boost::make_tuple(string("stealth"), stealthAddress.strAccount, nStealthEntryNum), stealthAddress);
+}
+
+bool CWalletDB::WriteStealthAddressEntry(const CStealthAddressEntry& stealthAddress)
+{
+    return WriteStealthAddressEntry(++nStealthAddressEntryNumber, stealthAddress);
 }
 
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
@@ -105,6 +117,49 @@ void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountin
         ssValue >> acentry;
         ssKey >> acentry.nEntryNo;
         entries.push_back(acentry);
+    }
+
+    pcursor->close();
+}
+
+void CWalletDB::ListStealthAddress(const string& strAccount, std::list<CStealthAddressEntry>& listStealthAddress)
+{
+    bool fAllAccounts = (strAccount == "*");
+
+    Dbc* pcursor = GetCursor();
+    if (!pcursor)
+        throw runtime_error("CWalletDB::ListStealthAddress() : cannot create DB cursor");
+    unsigned int fFlags = DB_SET_RANGE;
+    loop
+    {
+        // Read next record
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        if (fFlags == DB_SET_RANGE)
+            ssKey << boost::make_tuple(string("stealth"), (fAllAccounts? string("") : strAccount), uint64(0));
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
+        fFlags = DB_NEXT;
+        if (ret == DB_NOTFOUND)
+            break;
+        else if (ret != 0)
+        {
+            pcursor->close();
+            throw runtime_error("CWalletDB::ListStealthAddress() : error scanning DB");
+        }
+
+        // Unserialize
+        string strType;
+        ssKey >> strType;
+        if (strType != "stealth")
+            break;
+        CStealthAddressEntry stealthAddress;
+        ssKey >> stealthAddress.strAccount;
+        if (!fAllAccounts && stealthAddress.strAccount != strAccount)
+            break;
+
+        ssValue >> stealthAddress;
+        ssKey >> stealthAddress.nEntryNo;
+        listStealthAddress.push_back(stealthAddress);
     }
 
     pcursor->close();
@@ -260,6 +315,16 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 if (acentry.nOrderPos == -1)
                     fAnyUnordered = true;
             }
+        }
+        else if (strType == "stealth")
+        {
+            string strAccount;
+            ssKey >> strAccount;
+            uint64 nNumber;
+            ssKey >> nNumber;
+            if (nNumber > nStealthAddressEntryNumber)
+                nStealthAddressEntryNumber = nNumber;
+
         }
         else if (strType == "key" || strType == "wkey")
         {

@@ -214,7 +214,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getinfo",                &getinfo,                true,      false,      false },
     { "getmininginfo",          &getmininginfo,          true,      false,      false },
     { "getnewaddress",          &getnewaddress,          true,      false,      true },
-    { "getnewstealthaddress",   &getnewstealthaddress,   true,      false,      true },
+    { "getnewstealthaddress",   &getnewstealthaddress,   false,      false,      true },
     { "getaccountaddress",      &getaccountaddress,      true,      false,      true },
     { "setaccount",             &setaccount,             true,      false,      true },
     { "getaccount",             &getaccount,             false,     false,      true },
@@ -224,6 +224,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getreceivedbyaddress",   &getreceivedbyaddress,   false,     false,      true },
     { "getreceivedbyaccount",   &getreceivedbyaccount,   false,     false,      true },
     { "listreceivedbyaddress",  &listreceivedbyaddress,  false,     false,      true },
+    { "liststealthaddress",     &liststealthaddress,     false,     false,      true },
     { "listreceivedbyaccount",  &listreceivedbyaccount,  false,     false,      true },
     { "backupwallet",           &backupwallet,           true,      false,      true },
     { "keypoolrefill",          &keypoolrefill,          true,      false,      true },
@@ -235,7 +236,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getbalance",             &getbalance,             false,     false,      true },
     { "move",                   &movecmd,                false,     false,      true },
     { "sendfrom",               &sendfrom,               false,     false,      true },
-    { "sendstealthfrom",        &sendfrom,               false,     false,      true },
+    { "sendstealthfrom",        &sendstealthfrom,        false,     false,      true },
     { "sendmany",               &sendmany,               false,     false,      true },
     { "addmultisigaddress",     &addmultisigaddress,     false,     false,      true },
     { "createmultisig",         &createmultisig,         true,      true ,      false },
@@ -1174,6 +1175,8 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "move"                   && n > 3) ConvertTo<boost::int64_t>(params[3]);
     if (strMethod == "sendfrom"               && n > 2) ConvertTo<double>(params[2]);
     if (strMethod == "sendfrom"               && n > 3) ConvertTo<boost::int64_t>(params[3]);
+    if (strMethod == "sendstealthfrom"        && n > 2) ConvertTo<double>(params[2]);
+    if (strMethod == "sendstealthfrom"        && n > 3) ConvertTo<boost::int64_t>(params[3]);
     if (strMethod == "listtransactions"       && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "listtransactions"       && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "listaccounts"           && n > 0) ConvertTo<boost::int64_t>(params[0]);

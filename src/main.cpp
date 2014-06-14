@@ -411,16 +411,27 @@ bool CTransaction::IsStandard(string& strReason) const
             return false;
         }
     }
+    unsigned int nDataOut = 0;
+    txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, vout) {
         if (!::IsStandard(txout.scriptPubKey)) {
             strReason = "scriptpubkey";
             return false;
         }
-        if (txout.IsDust()) {
+        if (whichType == TX_NULL_DATA)
+            nDataOut++;
+        else if (txout.IsDust()) {
             strReason = "dust";
             return false;
         }
     }
+
+    // only one OP_RETURN txout is permitted
+    if (nDataOut > 1) {
+        strReason = "multi-op-return";
+        return false;
+    }
+
     return true;
 }
 
@@ -2514,13 +2525,18 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
     printf("ProcessBlock: ACCEPTED\n");
 
+
     // Check that all transactions are have OP_RETURN
+
+    list<CStealthAddressEntry> listStealthAddress;
+    CWalletDB(pwalletMain->strWalletFile).ListStealthAddress("*", listStealthAddress);
+
     BOOST_FOREACH(const CTransaction& tx, pblock->vtx){
         vector<CTxOut> vtxOut;
         vtxOut = tx.vout;
         bool IsStealthTx = false;
 
-        string recvAddr;
+        list<string> listRecvAddress;
         ec_secret scan_secret;
         ec_secret spend_secret;
         ec_point spend_pubkey;
@@ -2533,38 +2549,35 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             txOut = vtxOut[i];
 
             if(txOut.scriptPubKey[1] == OP_RETURN && txOut.scriptPubKey[2] == nonce_version){
-
+                // set flag
                 IsStealthTx = true;
 
-                if (!pwalletMain->IsLocked()){
+                // extract ephem_pubkey
+                ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 7, txOut.scriptPubKey.end());
 
-                    vector<unsigned char> scanSecret;
-                    vector<unsigned char> spendSecret;
-
-                    if(pwalletMain->GetScanSecret(scanSecret) && pwalletMain->GetSpendSecret(spendSecret))
+                // generate Monocle address from ephem_pubkey, scan_secret and spend_secret
+                BOOST_FOREACH(const CStealthAddressEntry& stealthAddress, listStealthAddress)
+                {
+                    for(unsigned int i = 0; i < 32; i++)
                     {
-
-                        for(unsigned int i = 0; i < 32; i++)
-                        {
-                            scan_secret[i] = scanSecret[i];
-                            spend_secret[i] = spendSecret[i];
-                        }
-
-                        spend_pubkey = secret_to_public_key(spend_secret, true);
-                        ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 7, txOut.scriptPubKey.end());
-                        ec_point uncover_pubkey = uncover_stealth(ephem_pubkey, scan_secret, spend_pubkey);
-                        payment_address return_addr;
-                        set_public_key(return_addr, uncover_pubkey);
-                        recvAddr = return_addr.encoded();
-
+                        scan_secret[i] = stealthAddress.scanSecret[i];
+                        spend_secret[i] = stealthAddress.spendSecret[i];
                     }
 
+                    spend_pubkey = secret_to_public_key(spend_secret, true);
+                    ec_point uncover_pubkey = uncover_stealth(ephem_pubkey, scan_secret, spend_pubkey);
+                    payment_address return_addr;
+                    set_public_key(return_addr, uncover_pubkey);
+                    string strRevcAddress = return_addr.encoded();
+                    listRecvAddress.push_back(strRevcAddress);
                 }
             }
         }
 
 
+
         if(IsStealthTx){
+            printf ("============== FOUND OP_RETURN================\n");
             // check match address
             for(unsigned int i = 0; i < vtxOut.size(); i++){
                 CTxOut txOut;
@@ -2575,58 +2588,60 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     CBitcoinAddress bitAddr;
                     bitAddr.Set(txoutAddr);
 
-                    if(recvAddr.compare(bitAddr.ToString()) == 0)
+                    BOOST_FOREACH(const string monocleAddress, listRecvAddress)
                     {
+                        if(monocleAddress.compare(bitAddr.ToString()) == 0){
+                            ec_secret secret = uncover_stealth_secret(
+                                        ephem_pubkey, scan_secret, spend_secret);
 
-                        ec_secret secret = uncover_stealth_secret(
-                                    ephem_pubkey, scan_secret, spend_secret);
+                            string wif_result = secret_to_wif(secret, true);
 
-                        string wif_result = secret_to_wif(secret, true);
+                            // import wif
+                            if (!pwalletMain->IsLocked()){
+                                string strSecret = wif_result;
+                                string strLabel = ephemPubkey;
 
-                        // import wif
-                        if (!pwalletMain->IsLocked()){
-                            string strSecret = wif_result;
-                            string strLabel = ephemPubkey;
+                                // Whether to perform rescan after import
+                                bool fRescan = true;
 
-                            // Whether to perform rescan after import
-                            bool fRescan = false;
+                                CBitcoinSecret vchSecret;
+                                bool fGood = vchSecret.SetString(strSecret);
 
-                            CBitcoinSecret vchSecret;
-                            bool fGood = vchSecret.SetString(strSecret);
-
-                            if (!fGood) {
-                                printf("Invalid private key encoding");
-                                return true;
-                            }
-
-                            CKey key = vchSecret.GetKey();
-                            CPubKey pubkey = key.GetPubKey();
-                            CKeyID vchAddress = pubkey.GetID();
-                            if (!key.IsValid()) {
-                                printf("Private key outside allowed range");
-                                return true;
-                            }
-
-                            {
-                                LOCK2(cs_main, pwalletMain->cs_wallet);
-
-                                pwalletMain->MarkDirty();
-                                pwalletMain->SetAddressBookName(vchAddress, strLabel);
-
-                                if (!pwalletMain->AddKeyPubKey(key, pubkey))
-                                {
-                                    printf("Error adding key to wallet");
+                                if (!fGood) {
+                                    printf("Invalid private key encoding");
                                     return true;
                                 }
 
-                                if (fRescan) {
-                                    pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-                                    pwalletMain->ReacceptWalletTransactions();
+                                CKey key = vchSecret.GetKey();
+                                CPubKey pubkey = key.GetPubKey();
+                                CKeyID vchAddress = pubkey.GetID();
+                                if (!key.IsValid()) {
+                                    printf("Private key outside allowed range");
+                                    return true;
                                 }
+
+                                {
+                                    LOCK2(cs_main, pwalletMain->cs_wallet);
+
+                                    pwalletMain->MarkDirty();
+                                    pwalletMain->SetAddressBookName(vchAddress, strLabel);
+
+                                    if (!pwalletMain->AddKeyPubKey(key, pubkey))
+                                    {
+                                        printf("Error adding key to wallet");
+                                        return true;
+                                    }
+
+                                    if (fRescan) {
+                                        pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+                                        pwalletMain->ReacceptWalletTransactions();
+                                    }
+                                }
+                            }else{
+                                printf("Error wallet locked!!!!!!!!!!!\n");
                             }
                         }
                     }
-
                 }
             }
         }

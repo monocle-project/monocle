@@ -20,6 +20,7 @@
 
 extern bool bSpendZeroConfChange;
 
+class CStealthAddressEntry;
 class CAccountingEntry;
 class CWalletTx;
 class CReserveKey;
@@ -302,17 +303,10 @@ public:
         return setKeyPool.size();
     }
 
+
     bool GetTransaction(const uint256 &hashTx, CWalletTx& wtx);
 
     bool SetDefaultKey(const CPubKey &vchPubKey);
-
-    bool SetScanSecret(std::vector<unsigned char> scan_secret);
-
-    bool GetScanSecret(std::vector<unsigned char>& scan_secret);
-
-    bool SetSpendSecret(std::vector<unsigned char> spend_secret);
-
-    bool GetSpendSecret(std::vector<unsigned char>& spend_secret);
 
     // signify that a particular wallet feature is now used. this may change nWalletVersion and nWalletMaxVersion if those are lower
     bool SetMinVersion(enum WalletFeature, CWalletDB* pwalletdbIn = NULL, bool fExplicit = false);
@@ -882,6 +876,44 @@ public:
 
 private:
     std::vector<char> _ssExtra;
+};
+
+
+/** Stealth Address
+ * Database key is stealth<stealthaddress>.
+ */
+class CStealthAddressEntry
+{
+public:
+    std::string strAccount;
+    std::string stealthAddress;
+    std::vector<unsigned char> spendSecret;
+    std::vector<unsigned char> scanSecret;
+    uint64 nEntryNo;
+
+    CStealthAddressEntry()
+    {
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        strAccount.clear();
+        stealthAddress.clear();
+        spendSecret.clear();
+        scanSecret.clear();
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        CStealthAddressEntry& me = *const_cast<CStealthAddressEntry*>(this);
+        if (!(nType & SER_GETHASH))
+            READWRITE(nVersion);
+        // Note: strAccount is serialized as part of the key, not here.
+        READWRITE(stealthAddress);
+        READWRITE(spendSecret);
+        READWRITE(scanSecret);
+    )
 };
 
 bool GetWalletFile(CWallet* pwallet, std::string &strWalletFileOut);
