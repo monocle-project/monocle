@@ -1721,6 +1721,61 @@ Value liststealthaddress(const Array& params, bool fHelp)
 
 }
 
+Value importstealthaddress(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+              "importstealthaddress [label] [rescan=true]\n"
+              "Adds a private key from stealth address transactions to your wallet.");
+
+
+    EnsureWalletIsUnlocked();
+
+    list<string> listImportSxWif;
+    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif);
+
+    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    {
+        printf("imported wif priv = %s\n", importSxWif.c_str());
+
+        string strLabel = params[0].get_str();
+
+        // Whether to perform rescan after import
+        bool fRescan = true;
+        if (params.size() > 1)
+            fRescan = params[1].get_bool();
+
+        CBitcoinSecret vchSecret;
+        bool fGood = vchSecret.SetString(importSxWif);
+
+        if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid stealth address private key encoding");
+
+        CKey key = vchSecret.GetKey();
+        CPubKey pubkey = key.GetPubKey();
+        CKeyID vchAddress = pubkey.GetID();
+        if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+
+        {
+            LOCK2(cs_main, pwalletMain->cs_wallet);
+
+            pwalletMain->MarkDirty();
+            pwalletMain->SetAddressBookName(vchAddress, strLabel);
+
+            pwalletMain->AddKeyPubKey(key, pubkey);
+            //if (!pwalletMain->AddKeyPubKey(key, pubkey))
+                //throw JSONRPCError(RPC_WALLET_ERROR, "Error adding stealth address key to wallet");
+
+            if (fRescan) {
+                pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+                pwalletMain->ReacceptWalletTransactions();
+            }
+        }
+    }
+
+    return Value::null;
+
+}
+
 
 Value sendtostealthaddress(const Array& params, bool fHelp)
 {

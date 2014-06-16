@@ -2577,7 +2577,6 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
 
         if(IsStealthTx){
-            printf ("============== FOUND OP_RETURN================\n");
             // check match address
             for(unsigned int i = 0; i < vtxOut.size(); i++){
                 CTxOut txOut;
@@ -2596,50 +2595,9 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
                             string wif_result = secret_to_wif(secret, true);
 
-                            // import wif
-                            if (!pwalletMain->IsLocked()){
-                                string strSecret = wif_result;
-                                string strLabel = ephemPubkey;
-
-                                // Whether to perform rescan after import
-                                bool fRescan = true;
-
-                                CBitcoinSecret vchSecret;
-                                bool fGood = vchSecret.SetString(strSecret);
-
-                                if (!fGood) {
-                                    printf("Invalid private key encoding");
-                                    return true;
-                                }
-
-                                CKey key = vchSecret.GetKey();
-                                CPubKey pubkey = key.GetPubKey();
-                                CKeyID vchAddress = pubkey.GetID();
-                                if (!key.IsValid()) {
-                                    printf("Private key outside allowed range");
-                                    return true;
-                                }
-
-                                {
-                                    LOCK2(cs_main, pwalletMain->cs_wallet);
-
-                                    pwalletMain->MarkDirty();
-                                    pwalletMain->SetAddressBookName(vchAddress, strLabel);
-
-                                    if (!pwalletMain->AddKeyPubKey(key, pubkey))
-                                    {
-                                        printf("Error adding key to wallet");
-                                        return true;
-                                    }
-
-                                    if (fRescan) {
-                                        pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-                                        pwalletMain->ReacceptWalletTransactions();
-                                    }
-                                }
-                            }else{
-                                printf("Error wallet locked!!!!!!!!!!!\n");
-                            }
+                            // store wif
+                            CWalletDB walletdb(pwalletMain->strWalletFile);
+                            walletdb.WriteImportedSxWifEntry(wif_result);
                         }
                     }
                 }

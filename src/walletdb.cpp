@@ -16,6 +16,7 @@ using namespace boost;
 
 static uint64 nAccountingEntryNumber = 0;
 static uint64 nStealthAddressEntryNumber = 0;
+static uint64 nSxWifEntryNumber = 0;
 
 //
 // CWalletDB
@@ -65,6 +66,16 @@ bool CWalletDB::WriteStealthAddressEntry(const uint64 nStealthEntryNum, const CS
 bool CWalletDB::WriteStealthAddressEntry(const CStealthAddressEntry& stealthAddress)
 {
     return WriteStealthAddressEntry(++nStealthAddressEntryNumber, stealthAddress);
+}
+
+bool CWalletDB::WriteImportedSxWifEntry(const uint64 nSxWifEntryNum, const string& importedSxWif)
+{
+    return Write(make_pair(string("wifsx"), nSxWifEntryNum), importedSxWif);
+}
+
+bool CWalletDB::WriteImportedSxWifEntry(const string& importedSxWif)
+{
+    return WriteImportedSxWifEntry(++nSxWifEntryNumber, importedSxWif);
 }
 
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
@@ -160,6 +171,42 @@ void CWalletDB::ListStealthAddress(const string& strAccount, std::list<CStealthA
         ssValue >> stealthAddress;
         ssKey >> stealthAddress.nEntryNo;
         listStealthAddress.push_back(stealthAddress);
+    }
+
+    pcursor->close();
+}
+
+void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
+{
+    Dbc* pcursor = GetCursor();
+    if (!pcursor)
+        throw runtime_error("CWalletDB::ListStealthAddress() : cannot create DB cursor");
+    unsigned int fFlags = DB_SET_RANGE;
+    loop
+    {
+        // Read next record
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        if (fFlags == DB_SET_RANGE)
+            ssKey << make_pair(string("wifsx"), uint64(0));
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
+        fFlags = DB_NEXT;
+        if (ret == DB_NOTFOUND)
+            break;
+        else if (ret != 0)
+        {
+            pcursor->close();
+            throw runtime_error("CWalletDB::ListImportedWif() : error scanning DB");
+        }
+
+        // Unserialize
+        string strType;
+        ssKey >> strType;
+        if (strType != "wifsx")
+            break;
+        string strValue;
+        ssValue >> strValue;
+        listImportedSxWif.push_back(strValue);
     }
 
     pcursor->close();
