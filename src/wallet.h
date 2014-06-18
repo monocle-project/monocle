@@ -120,6 +120,7 @@ public:
     std::map<uint256, int> mapRequestCount;
 
     std::map<CTxDestination, std::string> mapAddressBook;
+    std::list<CStealthAddressEntry> listStealthAddress;
 
     CPubKey vchDefaultKey;
 
@@ -138,6 +139,8 @@ public:
     void UnlockCoin(COutPoint& output);
     void UnlockAllCoins();
     void ListLockedCoins(std::vector<COutPoint>& vOutpts);
+    void ImportStealthAddress();
+    void NewStealthAddress(const CStealthAddressEntry& stealthAddressEntry);
 
     // keystore implementation
     // Generate a new key
@@ -185,13 +188,9 @@ public:
     int64 GetBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;
-    bool CreateTransaction(const std::vector<std::pair<CScript, int64> >& vecSend,
-                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl *coinControl=NULL);
-    bool CreateTransaction(CScript scriptPubKey, int64 nValue,
-                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl *coinControl=NULL);
-    bool CreateTransactionWithStealth(const std::vector<std::pair<CScript, int64> >& vecSend,
+    bool CreateTransaction(const std::vector<std::pair<std::pair<CScript, int64>, bool>>& vecSend,
                            CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl *coinControl=NULL);
-    bool CreateTransactionWithStealth(CScript scriptPubKey, int64 nValue,
+    bool CreateTransaction(CScript scriptPubKey, int64 nValue, bool isStealthAddressTransaction,
                            CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl *coinControl=NULL);
 
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
@@ -282,6 +281,8 @@ public:
 
     bool SetAddressBookName(const CTxDestination& address, const std::string& strName);
 
+    bool SetStealthAddressBook(const CStealthAddressEntry& stealthAddressEntry);
+
     bool DelAddressBookName(const CTxDestination& address);
 
     void UpdatedTransaction(const uint256 &hashTx);
@@ -321,6 +322,11 @@ public:
      * @note called with lock cs_wallet held.
      */
     boost::signals2::signal<void (CWallet *wallet, const CTxDestination &address, const std::string &label, bool isMine, ChangeType status)> NotifyAddressBookChanged;
+
+    /** Stealth Address book entry changed.
+     * @note called with lock cs_wallet held.
+     */
+    boost::signals2::signal<void (CWallet *wallet, const std::string &address, const std::string &label)> NotifyStealthAddressBookChanged;
 
     /** Wallet transaction added, removed or updated.
      * @note called with lock cs_wallet held.

@@ -15,6 +15,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "fixed.h"
 #include <stdint.h>
 
@@ -2536,7 +2537,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         vtxOut = tx.vout;
         bool IsStealthTx = false;
 
-        list<string> listRecvAddress;
+        vector<boost::tuple<string, ec_secret, ec_secret, ec_point> > vRecvAddress;
         ec_secret scan_secret;
         ec_secret spend_secret;
         ec_point spend_pubkey;
@@ -2569,7 +2570,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     payment_address return_addr;
                     set_public_key(return_addr, uncover_pubkey);
                     string strRevcAddress = return_addr.encoded();
-                    listRecvAddress.push_back(strRevcAddress);
+                    vRecvAddress.push_back(boost::make_tuple(strRevcAddress, scan_secret, spend_secret, ephem_pubkey));
                 }
             }
         }
@@ -2587,17 +2588,18 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     CBitcoinAddress bitAddr;
                     bitAddr.Set(txoutAddr);
 
-                    BOOST_FOREACH(const string monocleAddress, listRecvAddress)
+                    BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point)& item, vRecvAddress)
                     {
-                        if(monocleAddress.compare(bitAddr.ToString()) == 0){
+                        if(boost::get<0>(item).compare(bitAddr.ToString()) == 0){
                             ec_secret secret = uncover_stealth_secret(
-                                        ephem_pubkey, scan_secret, spend_secret);
+                                        boost::get<3>(item), boost::get<1>(item), boost::get<2>(item));
 
                             string wif_result = secret_to_wif(secret, true);
 
                             // store wif
                             CWalletDB walletdb(pwalletMain->strWalletFile);
                             walletdb.WriteImportedSxWifEntry(wif_result);
+                            printf("write wif content to file");
                         }
                     }
                 }

@@ -1185,18 +1185,26 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 
 
 
-bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
+bool CWallet::CreateTransaction(const vector<pair<pair<CScript, int64>, bool>>& vecSend,
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret,const CCoinControl* coinControl)
 {
     int64 nValue = 0;
-    BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
+    bool isStealthAddressTransaction = false;
+    BOOST_FOREACH (const PAIRTYPE(PAIRTYPE(CScript, int64), bool)& s, vecSend)
     {
+        if (s.second)
+        {
+            isStealthAddressTransaction = true;
+        }
+
         if (nValue < 0)
         {
             strFailReason = _("Transaction amounts must be positive");
             return false;
         }
-        nValue += s.second;
+
+        std::pair<CScript, int64> sTmp = s.first;
+        nValue += sTmp.second;
     }
     if (vecSend.empty() || nValue < 0)
     {
@@ -1219,9 +1227,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 int64 nTotalValue = nValue + nFeeRet;
                 double dPriority = 0;
                 // vouts to the payees
-                BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
+                BOOST_FOREACH (const PAIRTYPE(PAIRTYPE(CScript, int64), bool)& s, vecSend)
                 {
-                    CTxOut txout(s.second, s.first);
+                    std::pair<CScript, int64> sTmp = s.first;
+
+
+                    CTxOut txout(sTmp.second, sTmp.first);
                     if (txout.IsDust())
                     {
                         strFailReason = _("Transaction amount too small");
@@ -1319,6 +1330,18 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 else
                     reservekey.ReturnKey();
 
+                if(isStealthAddressTransaction){
+
+                    data_chunk stealth_metadata{{OP_RETURN, nonce_version, 0x00, 0x00, 0x00, 0x00}};
+                    ec_point ephem_pubkey = secret_to_public_key(ephem_secret, true);
+                    extend_data(stealth_metadata, ephem_pubkey);
+                    CScript sxScript(stealth_metadata);
+                    CTxOut sxTxOut(0, sxScript);
+                    vector<CTxOut>::iterator pos = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size()+1);
+                    wtxNew.vout.insert(pos, sxTxOut);
+
+                }
+
                 // Fill vin
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
                     wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
@@ -1363,209 +1386,13 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
     return true;
 }
 
-bool CWallet::CreateTransactionWithStealth(const vector<pair<CScript, int64> >& vecSend,
+
+bool CWallet::CreateTransaction(CScript scriptPubKey, int64 nValue, bool isStealthAddressTransaction,
                                 CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl* coinControl)
 {
-    int64 nValue = 0;
-    BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
-    {
-        if (nValue < 0)
-        {
-            strFailReason = _("Transaction amounts must be positive");
-            return false;
-        }
-        nValue += s.second;
-    }
-    if (vecSend.empty() || nValue < 0)
-    {
-        strFailReason = _("Transaction amounts must be positive");
-        return false;
-    }
-
-    wtxNew.BindWallet(this);
-
-    {
-        LOCK2(cs_main, cs_wallet);
-        {
-            nFeeRet = nTransactionFee;
-            loop
-            {
-                wtxNew.vin.clear();
-                wtxNew.vout.clear();
-                wtxNew.fFromMe = true;
-
-                int64 nTotalValue = nValue + nFeeRet;
-                double dPriority = 0;
-                // vouts to the payees
-                BOOST_FOREACH (const PAIRTYPE(CScript, int64)& s, vecSend)
-                {
-                    CTxOut txout(s.second, s.first);
-                    if (txout.IsDust())
-                    {
-                        strFailReason = _("Transaction amount too small");
-                        return false;
-                    }
-                    wtxNew.vout.push_back(txout);
-                }
-
-                // Choose coins to use
-                set<pair<const CWalletTx*,unsigned int> > setCoins;
-                int64 nValueIn = 0;
-                if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl))
-                {
-                    strFailReason = _("Insufficient funds");
-                    return false;
-                }
-                BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
-                {
-                    int64 nCredit = pcoin.first->vout[pcoin.second].nValue;
-                    //The priority after the next block (depth+1) is used instead of the current,
-                    //reflecting an assumption the user would accept a bit more delay for
-                    //a chance at a free transaction.
-                    dPriority += (double)nCredit * (pcoin.first->GetDepthInMainChain()+1);
-                }
-
-                int64 nChange = nValueIn - nValue - nFeeRet;
-                // if sub-cent change is required, the fee must be raised to at least nMinTxFee
-                // or until nChange becomes zero
-                // NOTE: this depends on the exact behaviour of GetMinFee
-                if (nFeeRet < CTransaction::nMinTxFee && nChange > 0 && nChange < CENT)
-                {
-                    int64 nMoveToFee = min(nChange, CTransaction::nMinTxFee - nFeeRet);
-                    nChange -= nMoveToFee;
-                    nFeeRet += nMoveToFee;
-                }
-
-                if (nChange > 0)
-                {
-                    // Fill a vout to ourself
-                    // TODO: pass in scriptChange instead of reservekey so
-                    // change transaction isn't always pay-to-bitcoin-address
-                    CScript scriptChange;
-
-                    // coin control: send change to custom address
-                    if (coinControl && !boost::get<CNoDestination>(&coinControl->destChange))
-                        scriptChange.SetDestination(coinControl->destChange);
-
-                    // send change to one of the specified change addresses
-                    else if (mapArgs.count("-change") && mapMultiArgs["-change"].size() > 0)
-                    {
-                        CBitcoinAddress address(mapMultiArgs["-change"][GetRandInt(mapMultiArgs["-change"].size())]);
-
-                        CKeyID keyID;
-                        if (!address.GetKeyID(keyID)) {
-                            strFailReason = _("Bad change address");
-                            return false;
-                        }
-
-                        scriptChange.SetDestination(keyID);
-                    }
-
-                    // no coin control: send change to newly generated address
-                    else
-                    {
-                        // Note: We use a new key here to keep it from being obvious which side is the change.
-                        //  The drawback is that by not reusing a previous key, the change may be lost if a
-                        //  backup is restored, if the backup doesn't have the new private key for the change.
-                        //  If we reused the old key, it would be possible to add code to look for and
-                        //  rediscover unknown transactions that were written with keys of ours to recover
-                        //  post-backup change.
-
-                        // Reserve a new key pair from key pool
-                        CPubKey vchPubKey;
-                        assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
-
-                        scriptChange.SetDestination(vchPubKey.GetID());
-                    }
-
-                    CTxOut newTxOut(nChange, scriptChange);
-
-                    // Never create dust outputs; if we would, just
-                    // add the dust to the fee.
-                    if (newTxOut.IsDust())
-                    {
-                        nFeeRet += nChange;
-                        reservekey.ReturnKey();
-                    }
-                    else
-                    {
-                        // Insert change txn at random position:
-                        vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size()+1);
-                        wtxNew.vout.insert(position, newTxOut);
-                    }
-                }
-                else
-                    reservekey.ReturnKey();
-
-
-                data_chunk stealth_metadata{{OP_RETURN, nonce_version, 0x00, 0x00, 0x00, 0x00}};
-                ec_point ephem_pubkey = secret_to_public_key(ephem_secret, true);
-                extend_data(stealth_metadata, ephem_pubkey);
-                CScript sxScript(stealth_metadata);
-                CTxOut sxTxOut(0, sxScript);
-
-                vector<CTxOut>::iterator pos = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size()+1);
-                wtxNew.vout.insert(pos, sxTxOut);
-
-
-                // Fill vin
-                BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
-                    wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
-
-                // Sign
-                int nIn = 0;
-                BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
-                    if (!SignSignature(*this, *coin.first, wtxNew, nIn++))
-                    {
-                        strFailReason = _("Signing transaction failed");
-                        return false;
-                    }
-
-                // Limit size
-                unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
-                if (nBytes >= MAX_STANDARD_TX_SIZE)
-                {
-                    strFailReason = _("Transaction too large");
-                    return false;
-                }
-                dPriority /= nBytes;
-
-                // Check that enough fee is included
-                int64 nPayFee = nTransactionFee * (1 + (int64)nBytes / 1000);
-            //    bool fAllowFree = CTransaction::AllowFree(dPriority); // No free TXs in MON
-               bool fAllowFree = false;					// No free TXs in MON
-                int64 nMinFee = wtxNew.GetMinFee(1, fAllowFree, GMF_SEND);
-                if (nFeeRet < max(nPayFee, nMinFee))
-                {
-                    nFeeRet = max(nPayFee, nMinFee);
-                    continue;
-                }
-
-                // Fill vtxPrev by copying from previous transactions vtxPrev
-                wtxNew.AddSupportingTransactions();
-                wtxNew.fTimeReceivedIsTxTime = true;
-
-                break;
-            }
-        }
-    }
-    return true;
-}
-
-bool CWallet::CreateTransaction(CScript scriptPubKey, int64 nValue,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
-{
-    vector< pair<CScript, int64> > vecSend;
-    vecSend.push_back(make_pair(scriptPubKey, nValue));
-    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl);
-}
-
-bool CWallet::CreateTransactionWithStealth(CScript scriptPubKey, int64 nValue,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl* coinControl)
-{
-    vector< pair<CScript, int64> > vecSend;
-    vecSend.push_back(make_pair(scriptPubKey, nValue));
-    return CreateTransactionWithStealth(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, ephem_secret, coinControl);
+    vector< pair< pair<CScript, int64>, bool>> vecSend;
+    vecSend.push_back(make_pair(make_pair(scriptPubKey, nValue), isStealthAddressTransaction));
+    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, ephem_secret, coinControl);
 }
 
 // Call after CreateTransaction unless you want to abort
@@ -1632,7 +1459,8 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
         return strError;
     }
     string strError;
-    if (!CreateTransaction(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, strError))
+    ec_secret ephem_secret;
+    if (!CreateTransaction(scriptPubKey, nValue, false, wtxNew, reservekey, nFeeRequired, strError, ephem_secret))
     {
         if (nValue + nFeeRequired > GetBalance())
             strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
@@ -1661,7 +1489,7 @@ string CWallet::SendMoneyWithStealth(CScript scriptPubKey, int64 nValue, CWallet
         return strError;
     }
     string strError;
-    if (!CreateTransactionWithStealth(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, strError, ephem_secret))
+    if (!CreateTransaction(scriptPubKey, nValue, true, wtxNew, reservekey, nFeeRequired, strError, ephem_secret))
     {
         if (nValue + nFeeRequired > GetBalance())
             strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
@@ -1707,7 +1535,6 @@ string CWallet::SendMoneyToStealthDestination(const CTxDestination& address, int
     CScript scriptPubKey;
     scriptPubKey.SetDestination(address);
 
-
     return SendMoneyWithStealth(scriptPubKey, nValue, wtxNew, ephem_secret, fAskFee);
 }
 
@@ -1747,6 +1574,14 @@ bool CWallet::SetAddressBookName(const CTxDestination& address, const string& st
     if (!fFileBacked)
         return false;
     return CWalletDB(strWalletFile).WriteName(CBitcoinAddress(address).ToString(), strName);
+}
+
+bool CWallet::SetStealthAddressBook(const CStealthAddressEntry& stealthAddressEntry)
+{
+    NotifyStealthAddressBookChanged(this, stealthAddressEntry.stealthAddress, stealthAddressEntry.strAccount);
+    if (!fFileBacked)
+        return false;
+    return CWalletDB(strWalletFile).WriteStealthAddressEntry(stealthAddressEntry);
 }
 
 bool CWallet::DelAddressBookName(const CTxDestination& address)
@@ -2189,5 +2024,50 @@ void CWallet::ListLockedCoins(std::vector<COutPoint>& vOutpts)
         COutPoint outpt = (*it);
         vOutpts.push_back(outpt);
     }
+}
+
+void CWallet::ImportStealthAddress()
+{
+    list<string> listImportSxWif;
+    CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif);
+
+    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    {
+        string strLabel = "stealth address transaction";
+        // Whether to perform rescan after import
+        bool fRescan = true;
+
+        CBitcoinSecret vchSecret;
+        bool fGood = vchSecret.SetString(importSxWif);
+
+        if (!fGood) throw runtime_error("Invalid stealth address private key encoding");
+
+        CKey key = vchSecret.GetKey();
+        CPubKey pubkey = key.GetPubKey();
+        CKeyID vchAddress = pubkey.GetID();
+        if (!key.IsValid()) throw runtime_error("Private key outside allowed range");
+
+        {
+            LOCK2(cs_main, cs_wallet);
+
+            MarkDirty();
+            SetAddressBookName(vchAddress, strLabel);
+
+            AddKeyPubKey(key, pubkey);
+
+            if (fRescan) {
+                ScanForWalletTransactions(pindexGenesisBlock, true);
+                ReacceptWalletTransactions();
+            }
+        }
+    }
+}
+
+
+void CWallet::NewStealthAddress(const CStealthAddressEntry& stealthAddressEntry)
+{
+    // write to database
+    CWalletDB walletdb(strWalletFile);
+    walletdb.WriteStealthAddressEntry(stealthAddressEntry);
 }
 

@@ -365,12 +365,14 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "stealth")
         {
-            string strAccount;
-            ssKey >> strAccount;
+            CStealthAddressEntry stealthAddress;
+            ssValue >> stealthAddress;
+            ssKey >> stealthAddress.strAccount;
             uint64 nNumber;
             ssKey >> nNumber;
             if (nNumber > nStealthAddressEntryNumber)
                 nStealthAddressEntryNumber = nNumber;
+            pwallet->listStealthAddress.push_back(stealthAddress);
 
         }
         else if (strType == "key" || strType == "wkey")

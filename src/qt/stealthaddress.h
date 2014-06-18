@@ -1,4 +1,0 @@
-#ifndef STEALTHADDRESS_H
-#define STEALTHADDRESS_H
-
-#endif // STEALTHADDRESS_H
