@@ -1129,7 +1129,7 @@ bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubK
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsigned char> >& vSolutionsRet)
 {
     // Templates
-    static map<txnouttype, CScript> mTemplates;
+    static multimap<txnouttype, CScript> mTemplates;
     if (mTemplates.empty())
     {
         // Standard tx, sender provides pubkey, receiver adds signature
@@ -1169,7 +1169,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         // Compare
         CScript::const_iterator pc1 = script1.begin();
         CScript::const_iterator pc2 = script2.begin();
-        loop
+        while (true)
         {
             if (pc1 == script1.end() && pc2 == script2.end())
             {
@@ -1232,7 +1232,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             {
                 // small pushdata, <= MAX_OP_RETURN_RELAY bytes
                 if (vch1.size() > MAX_OP_RETURN_RELAY)
-                break;
+                    break;
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
