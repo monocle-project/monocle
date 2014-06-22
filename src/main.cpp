@@ -2549,12 +2549,12 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             CTxOut txOut;
             txOut = vtxOut[i];
 
-            if(txOut.scriptPubKey[1] == OP_RETURN && txOut.scriptPubKey[2] == nonce_version){
+            if(txOut.scriptPubKey[1] == OP_RETURN && txOut.scriptPubKey[2] == 0x21){
                 // set flag
                 IsStealthTx = true;
 
                 // extract ephem_pubkey
-                ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 7, txOut.scriptPubKey.end());
+                ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 2, txOut.scriptPubKey.begin() + 35);
 
                 // generate Monocle address from ephem_pubkey, scan_secret and spend_secret
                 BOOST_FOREACH(const CStealthAddressEntry& stealthAddress, listStealthAddress)

@@ -35,8 +35,6 @@ typedef std::array<uint8_t, long_hash_size> long_hash;
 typedef uint32_t stealth_bitfield;
 
 
-
-
 template <typename D, typename T>
 void extend_data(D& data, const T& other)
 {
@@ -184,23 +182,15 @@ const short_hash null_short_hash = {
 class payment_address
 {
 public:
-#ifdef ENABLE_TESTNET
     enum
     {
-        pubkey_version = 0x6f,
-        script_version = 0xc4,
-        wif_version = 0xef,
+        pubkey_version = 0x32,
+        script_version = 0x07,
+        wif_version = 0xb2,
         invalid_version = 0xff
     };
-#else
-    enum
-    {
-        pubkey_version = 0x41,
-        script_version = 0xb2,
-        wif_version = 0xc1,
-        invalid_version = 0xff
-    };
-#endif
+
+   // wif_version = pubkey_version + 128
    payment_address();
    payment_address(uint8_t version, const short_hash& hash);
    payment_address(const std::string& encoded_address);

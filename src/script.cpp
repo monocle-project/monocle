@@ -1156,6 +1156,21 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         return true;
     }
 
+    /*
+    // Shortcut for stealth address:
+    // it is always OP_RETURN 33 [33 byte hash]
+    printf("Before check IsStealthAddress\n");
+    printf("\n size = %d", scriptPubKey.size());
+    if (scriptPubKey.IsStealthAddress())
+    {
+        printf("\nAfter check IsStealthAddress");
+        typeRet = TX_NULL_DATA;
+        vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.begin()+35);
+        vSolutionsRet.push_back(hashBytes);
+        return true;
+    }
+    */
+
     // Scan templates
     const CScript& script1 = scriptPubKey;
     BOOST_FOREACH(const PAIRTYPE(txnouttype, CScript)& tplate, mTemplates)
@@ -1755,6 +1770,14 @@ bool CScript::IsPayToScriptHash() const
             this->at(1) == 0x14 &&
             this->at(22) == OP_EQUAL);
 }
+
+bool CScript::IsStealthAddress() const
+{
+    return (this->size() == 35 &&
+            this->at(0) == OP_RETURN &&
+            this->at(1) == 0x21);
+}
+
 
 bool CScript::HasCanonicalPushes() const
 {

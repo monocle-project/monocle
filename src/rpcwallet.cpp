@@ -1832,8 +1832,9 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
     // Generate the address.
     payment_address payaddr;
     set_public_key(payaddr, addr_pubkey);
-    CBitcoinAddress address(payaddr.encoded());
+    string strAddrTmp = payaddr.encoded();
 
+    CBitcoinAddress address(strAddrTmp);
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Monocle address");
 
@@ -1885,8 +1886,9 @@ Value sendstealthfrom(const Array& params, bool fHelp)
     payment_address payaddr;
     set_public_key(payaddr, addr_pubkey);
 
+    string addressTmp = payaddr.encoded();
 
-    CBitcoinAddress address(payaddr.encoded());
+    CBitcoinAddress address(addressTmp);
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Monocle address");
 

@@ -1332,29 +1332,13 @@ bool CWallet::CreateTransaction(const vector<pair<pair<CScript, int64>, bool>>& 
 
                 if(isStealthAddressTransaction){
 
-                    data_chunk stealth_metadata{{OP_RETURN, nonce_version, 0x00, 0x00, 0x00, 0x00}};
+                    //data_chunk stealth_metadata{{OP_RETURN, nonce_version, 0x00, 0x00, 0x00, 0x00}};
                     ec_point ephem_pubkey = secret_to_public_key(ephem_secret, true);
                     //extend_data(stealth_metadata, ephem_pubkey);
                     CScript sxScript;
-                    //vector<unsigned char> tmp = ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
                     sxScript.push_back(OP_RETURN);
-                    sxScript.push_back(0x27);
-                    sxScript.push_back(0x01);
-                    sxScript.push_back(0x06);
-                    sxScript.push_back(0x00);
-                    sxScript.push_back(0x00);
-                    sxScript.push_back(0x00);
-                    sxScript.push_back(0x00);
+                    sxScript.push_back(0x21);
                     sxScript.insert(sxScript.end(), ephem_pubkey.begin(), ephem_pubkey.end());
-
-                    //CScript() << OP_RETURN << PavJmvmyxNVpR9p3chYu6SMWe9jrvJPKvjiFF4JQ5z9jNgNNSaMbbQxQDcCPr8axbp4V5ezhy3oHLSnvqeL4kXZczwjhfKM4FfATiA6FrseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
-                    /*sxScript.push_back(OP_SMALLDATA);
-                    sxScript.push_back(OP_SMALLDATA);
-                    sxScript.push_back(OP_SMALLDATA);
-                    sxScript.push_back(OP_SMALLDATA);
-                    sxScript.push_back(OP_SMALLDATA);
-                    */
-                    //sxScript.insert(sxScript.end(), tmp.begin(), tmp.end());
                     CTxOut sxTxOut(0, sxScript);
                     vector<CTxOut>::iterator pos = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size()+1);
                     wtxNew.vout.insert(pos, sxTxOut);
