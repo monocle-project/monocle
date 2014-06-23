@@ -2549,7 +2549,8 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             CTxOut txOut;
             txOut = vtxOut[i];
 
-            if(txOut.scriptPubKey[1] == OP_RETURN && txOut.scriptPubKey[2] == 0x21){
+            if(txOut.scriptPubKey[0] == OP_RETURN && txOut.scriptPubKey[1] == 0x21){
+
                 // set flag
                 IsStealthTx = true;
 

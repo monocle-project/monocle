@@ -182,13 +182,25 @@ const short_hash null_short_hash = {
 class payment_address
 {
 public:
+    // testnet
     enum
+        {
+            pubkey_version = 0x41,
+            script_version = 0xb2,
+            wif_version = 0xc1,
+            invalid_version = 0xff
+        };
+
+    /*
+     * mainnet
+     * enum
     {
         pubkey_version = 0x32,
         script_version = 0x07,
         wif_version = 0xb2,
         invalid_version = 0xff
     };
+    */
 
    // wif_version = pubkey_version + 128
    payment_address();
