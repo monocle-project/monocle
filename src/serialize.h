@@ -21,11 +21,12 @@
 
 #include "allocators.h"
 #include "version.h"
+#include "script.h"
 
 typedef long long  int64;
 typedef unsigned long long  uint64;
 
-class CScript;
+//class CScript;
 class CDataStream;
 class CAutoFile;
 static const unsigned int MAX_SIZE = 0x02000000;
