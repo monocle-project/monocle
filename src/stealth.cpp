@@ -1,3 +1,9 @@
+// Copyright (c) 2014 bushido
+// Copyright (c) 2014 The Vertcoin developers
+// Copyright (c) 2014 https://github.com/spesmilo/sx
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "stealth.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -30,13 +36,8 @@ void append_checksum(data_chunk& data)
     extend_data(data, to_little_endian(checksum));
 }
 
-
-
-
 std::string stealth_address::encoded() const
 {
-
-
     data_chunk raw_addr;
     raw_addr.push_back(stealth_version_byte);
     raw_addr.push_back(options);
@@ -46,11 +47,10 @@ std::string stealth_address::encoded() const
     for (const ec_point& pubkey: spend_pubkeys)
         extend_data(raw_addr, pubkey);
     raw_addr.push_back(number_signatures);
-    //BITCOIN_ASSERT_MSG(prefix.number_bits == 0, "Not yet implemented!");
+    assert_msg(prefix.number_bits == 0, "Not yet implemented!");
     raw_addr.push_back(0);
     append_checksum(raw_addr);
     return EncodeBase58(raw_addr);
-
 }
 
 bool verify_checksum(const data_chunk& data)
@@ -59,7 +59,6 @@ bool verify_checksum(const data_chunk& data)
     auto checksum = from_little_endian<uint32_t>(data.end() - 4);
     return bitcoin_checksum(body) == checksum;
 }
-
 
 bool stealth_address::set_encoded(const std::string& encoded_address)
 {
@@ -120,8 +119,6 @@ ec_secret generate_random_secret()
         byte = dist(generator);
     return secret;
 }
-
-
 
 bool ec_multiply(ec_point& a, const ec_secret& b)
 {
@@ -201,7 +198,7 @@ short_hash bitcoin_short_hash(const data_chunk& chunk)
 
 void set_public_key(payment_address& address, const data_chunk& public_key)
 {
-    address.set(payment_address::pubkey_version,
+    address.set(fTestNet ? CBitcoinAddress::PUBKEY_ADDRESS_TEST : CBitcoinAddress::PUBKEY_ADDRESS,
         bitcoin_short_hash(public_key));
 }
 
@@ -302,7 +299,7 @@ std::string secret_to_wif(const ec_secret& secret, bool compressed)
     data_chunk data;
     data.reserve(1 + hash_size + 1 + 4);
 
-    data.push_back(payment_address::wif_version);
+    data.push_back(fTestNet ? CBitcoinSecret::PRIVKEY_ADDRESS_TEST : BitcoinSecret::PRIVKEY_ADDRESS);
     extend_data(data, secret);
     if (compressed)
         data.push_back(0x01);
@@ -310,7 +307,6 @@ std::string secret_to_wif(const ec_secret& secret, bool compressed)
     append_checksum(data);
     return EncodeBase58(data);
 }
-
 
 data_chunk decode_hex(std::string hex)
 {
