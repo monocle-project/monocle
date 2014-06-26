@@ -2024,15 +2024,15 @@ void CWallet::ListLockedCoins(std::vector<COutPoint>& vOutpts)
 
 void CWallet::ImportStealthAddress()
 {
-    list<string> listImportSxWif;
+    list<CStealthAddressWifEntry> listImportSxWif;
     CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif, false);
 
-    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    BOOST_FOREACH(const CStealthAddressWifEntry& importSxWif, listImportSxWif)
     {
-        string strLabel = "stealth address transaction";
+        string strLabel = importSxWif.stealthAddress;
 
         CBitcoinSecret vchSecret;
-        bool fGood = vchSecret.SetString(importSxWif);
+        bool fGood = vchSecret.SetString(importSxWif.wif);
 
         if (!fGood) throw runtime_error("Invalid stealth address private key encoding");
 
@@ -2065,10 +2065,10 @@ void CWallet::ImportStealthAddress()
 
 void CWallet::ResetPrivateKeysStatus()
 {
-    list<string> listImportSxWif;
+    list<CStealthAddressWifEntry> listImportSxWif;
     CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif, true);
 
-    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    BOOST_FOREACH(const CStealthAddressWifEntry& importSxWif, listImportSxWif)
     {
         // mark as unimported
         CWalletDB(strWalletFile).WriteImportedSxWifEntry(importSxWif, false);

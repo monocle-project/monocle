@@ -923,6 +923,37 @@ public:
     )
 };
 
+
+/** Stealth WIF
+ */
+class CStealthAddressWifEntry
+{
+public:
+    std::string wif;
+    std::string stealthAddress;
+    uint64 nEntryNo;
+
+    CStealthAddressWifEntry()
+    {
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        wif.clear();
+        stealthAddress.clear();
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        CStealthAddressWifEntry& me = *const_cast<CStealthAddressWifEntry*>(this);
+        if (!(nType & SER_GETHASH))
+            READWRITE(nVersion);
+        READWRITE(wif);
+        READWRITE(stealthAddress);
+    )
+};
+
 bool GetWalletFile(CWallet* pwallet, std::string &strWalletFileOut);
 
 #endif

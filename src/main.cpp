@@ -2537,7 +2537,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         vtxOut = tx.vout;
         bool IsStealthTx = false;
 
-        vector<boost::tuple<string, ec_secret, ec_secret, ec_point> > vRecvAddress;
+        vector<boost::tuple<string, ec_secret, ec_secret, ec_point, string> > vRecvAddress;
         ec_secret scan_secret;
         ec_secret spend_secret;
         ec_point spend_pubkey;
@@ -2574,7 +2574,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     payment_address return_addr;
                     set_public_key(return_addr, uncover_pubkey);
                     string strRevcAddress = return_addr.encoded();
-                    vRecvAddress.push_back(boost::make_tuple(strRevcAddress, scan_secret, spend_secret, ephem_pubkey));
+                    vRecvAddress.push_back(boost::make_tuple(strRevcAddress, scan_secret, spend_secret, ephem_pubkey, stealthAddress.stealthAddress));
                 }
             }
         }
@@ -2592,7 +2592,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     CBitcoinAddress bitAddr;
                     bitAddr.Set(txoutAddr);
 
-                    BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point)& item, vRecvAddress)
+                    BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point, string)& item, vRecvAddress)
                     {
                         if(boost::get<0>(item).compare(bitAddr.ToString()) == 0){
 
@@ -2603,7 +2603,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
                             // store wif
                             CWalletDB walletdb(pwalletMain->strWalletFile);
-                            walletdb.WriteImportedSxWifEntry(wif_result, false);
+                            CStealthAddressWifEntry itemImportWif;
+                            itemImportWif.stealthAddress = boost::get<4>(item);
+                            itemImportWif.wif = wif_result;
+                            walletdb.WriteImportedSxWifEntry(itemImportWif, false);
                             printf("\n write wif content to wallet\n");
                         }
                     }

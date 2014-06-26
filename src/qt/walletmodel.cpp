@@ -259,7 +259,8 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
                 CScript scriptPubKey;
                 scriptPubKey.SetDestination(CBitcoinAddress(payAddrEncoded).Get());
                 vecSend.push_back(make_pair(make_pair(make_pair(scriptPubKey, rcp.amount), ephem_secret), true));
-            }
+
+             }
         }
 
         CWalletTx wtx;

@@ -67,9 +67,9 @@ bool CWalletDB::WriteStealthAddressEntry(const CStealthAddressEntry& stealthAddr
     return WriteStealthAddressEntry(++nStealthAddressEntryNumber, stealthAddress);
 }
 
-bool CWalletDB::WriteImportedSxWifEntry(const string& importedSxWif, bool isImported)
+bool CWalletDB::WriteImportedSxWifEntry(const CStealthAddressWifEntry& importedSxTx, bool isImported)
 {
-    return Write(make_pair(string("wifsx"), importedSxWif), isImported);
+    return Write(boost::make_tuple(string("wifsx"), importedSxTx.wif, importedSxTx.stealthAddress), isImported);
 }
 
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
@@ -170,7 +170,7 @@ void CWalletDB::ListStealthAddress(const string& strAccount, std::list<CStealthA
     pcursor->close();
 }
 
-void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif, bool isImported)
+void CWalletDB::ListImportedSxWif(std::list<CStealthAddressWifEntry>& listImportedSxWif, bool isImported)
 {
     Dbc* pcursor = GetCursor();
     if (!pcursor)
@@ -181,7 +181,7 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif, boo
         // Read next record
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         if (fFlags == DB_SET_RANGE)
-            ssKey << make_pair(string("wifsx"), string(""));
+            ssKey << boost::make_tuple(string("wifsx"), string(""), string(""));
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
         fFlags = DB_NEXT;
@@ -198,13 +198,22 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif, boo
         ssKey >> strType;
         if (strType != "wifsx")
             break;
+
         string strWif;
         ssKey >> strWif;
+
+        string strStealthAddress;
+        ssKey >> strStealthAddress;
+
         bool strValue;
         ssValue >> strValue;
         if (isImported != strValue)
             break;
-        listImportedSxWif.push_back(strWif);
+
+        CStealthAddressWifEntry item;
+        item.wif = strWif;
+        item.stealthAddress = strStealthAddress;
+        listImportedSxWif.push_back(item);
     }
 
     pcursor->close();
