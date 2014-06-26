@@ -47,7 +47,7 @@ std::string stealth_address::encoded() const
     for (const ec_point& pubkey: spend_pubkeys)
         extend_data(raw_addr, pubkey);
     raw_addr.push_back(number_signatures);
-    assert_msg(prefix.number_bits == 0, "Not yet implemented!");
+    //assert_msg(prefix.number_bits == 0, "Not yet implemented!");
     raw_addr.push_back(0);
     append_checksum(raw_addr);
     return EncodeBase58(raw_addr);
@@ -133,7 +133,6 @@ hash_digest sha256_hash(const data_chunk& chunk)
     return hash;
 }
 
-
 ec_secret shared_secret(const ec_secret& secret, ec_point point)
 {
     // diffie hellman stage
@@ -143,7 +142,6 @@ ec_secret shared_secret(const ec_secret& secret, ec_point point)
     // start the second stage
     return sha256_hash(point);
 }
-
 
 bool ec_tweak_add(ec_point& a, const ec_secret& b)
 {
@@ -167,7 +165,6 @@ ec_point secret_to_public_key(const ec_secret& secret,
     assert(size == static_cast<size_t>(out_size));
     return out;
 }
-
 
 ec_point initiate_stealth(
     const ec_secret& ephem_secret, const ec_point& scan_pubkey,
@@ -224,13 +221,13 @@ void payment_address::set(uint8_t version, const short_hash& hash)
     hash_ = hash;
 }
 
-
 bool is_base58(const char c)
 {
     auto last = std::end(base58_chars) - 1;
     // This works because the base58 characters happen to be in sorted order
     return std::binary_search(base58_chars, last, c);
 }
+
 bool is_base58(const std::string& text)
 {
     return std::all_of(text.begin(), text.end(),
@@ -299,7 +296,7 @@ std::string secret_to_wif(const ec_secret& secret, bool compressed)
     data_chunk data;
     data.reserve(1 + hash_size + 1 + 4);
 
-    data.push_back(fTestNet ? CBitcoinSecret::PRIVKEY_ADDRESS_TEST : BitcoinSecret::PRIVKEY_ADDRESS);
+    data.push_back(fTestNet ? CBitcoinSecret::PRIVKEY_ADDRESS_TEST : CBitcoinSecret::PRIVKEY_ADDRESS);
     extend_data(data, secret);
     if (compressed)
         data.push_back(0x01);

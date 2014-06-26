@@ -2542,17 +2542,20 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         ec_secret spend_secret;
         ec_point spend_pubkey;
         ec_point ephem_pubkey;
-        string ephemPubkey;
 
         // check sx transaction
         for(unsigned int i = 0; i < vtxOut.size(); i++){
             CTxOut txOut;
             txOut = vtxOut[i];
 
+
             if(txOut.scriptPubKey[0] == OP_RETURN && txOut.scriptPubKey[1] == 0x21){
 
                 // set flag
                 IsStealthTx = true;
+
+                // clear old ephem_pubkey
+                ephem_pubkey.clear();
 
                 // extract ephem_pubkey
                 ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 2, txOut.scriptPubKey.begin() + 35);
@@ -2592,6 +2595,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point)& item, vRecvAddress)
                     {
                         if(boost::get<0>(item).compare(bitAddr.ToString()) == 0){
+
                             ec_secret secret = uncover_stealth_secret(
                                         boost::get<3>(item), boost::get<1>(item), boost::get<2>(item));
 

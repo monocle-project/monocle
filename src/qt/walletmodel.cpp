@@ -215,14 +215,15 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         LOCK2(cs_main, wallet->cs_wallet);
 
         // Sendmany
-        std::vector<std::pair<std::pair<CScript, int64>, bool>> vecSend;
+        std::vector<std::pair<std::pair<std::pair<CScript, int64>, ec_secret>, bool>> vecSend;
         foreach(const SendCoinsRecipient &rcp, recipients)
         {
             if(rcp.address.toStdString().length() < 40){
 
                 CScript scriptPubKey;
+                ec_secret ecSecretTmp;
                 scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
-                vecSend.push_back(make_pair(make_pair(scriptPubKey, rcp.amount), false));
+                vecSend.push_back(make_pair(make_pair(make_pair(scriptPubKey, rcp.amount), ecSecretTmp), false));
 
             }else{
                 stealth_address recv;
@@ -257,7 +258,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 
                 CScript scriptPubKey;
                 scriptPubKey.SetDestination(CBitcoinAddress(payAddrEncoded).Get());
-                vecSend.push_back(make_pair(make_pair(scriptPubKey, rcp.amount), true));
+                vecSend.push_back(make_pair(make_pair(make_pair(scriptPubKey, rcp.amount), ephem_secret), true));
             }
         }
 
@@ -265,7 +266,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         CReserveKey keyChange(wallet);
         int64 nFeeRequired = 0;
         std::string strFailReason;
-        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, ephem_secret, coinControl);
+        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, coinControl);
 
         if(!fCreated)
         {
