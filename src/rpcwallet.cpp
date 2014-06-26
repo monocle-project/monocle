@@ -1723,6 +1723,29 @@ Value liststealthaddress(const Array& params, bool fHelp)
 
 }
 
+Value resetprikeystatus(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+              "resetprikeystatus\n"
+              "Resets all private keys which belong to Monocle Stealth address");
+
+    list<string> listImportSxWif;
+    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif, true);
+
+    printf("\n size of listImportSxWif = %d \n", listImportSxWif.size());
+
+    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    {
+        // mark as unimported
+        CWalletDB(pwalletMain->strWalletFile).WriteImportedSxWifEntry(importSxWif, false);
+        printf("\n reseting private key for importing sx \n");
+    }
+
+    return Value::null;
+
+}
+
 Value importstealthaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
@@ -1734,7 +1757,7 @@ Value importstealthaddress(const Array& params, bool fHelp)
     EnsureWalletIsUnlocked();
 
     list<string> listImportSxWif;
-    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif);
+    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif, false);
 
     // Whether to perform rescan after import
     bool fRescan = true;

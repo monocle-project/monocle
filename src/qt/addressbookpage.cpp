@@ -65,6 +65,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
         ui->signMessage->setVisible(false);
         ui->importStealthAddress->setVisible(false);
         ui->newStealthAddress->setVisible(false);
+        ui->resetPrivateKeysButton->setVisible(false);
         break;
     case ReceivingTab:
         ui->labelExplanation->setText(tr("These are your Monocle addresses for receiving payments. You may want to give a different one to each sender so you can keep track of who is paying you."));
@@ -72,6 +73,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
         ui->signMessage->setVisible(true);
         ui->importStealthAddress->setVisible(false);
         ui->newStealthAddress->setVisible(false);
+        ui->resetPrivateKeysButton->setVisible(false);
         break;
     case StealthAddressTab:
         ui->labelExplanation->setText(tr("These are your Monocle addresses for receiving payments. You may want to give a different one to each sender so you can keep track of who is paying you."));
@@ -82,6 +84,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
         ui->verifyMessage->setVisible(false);
         ui->importStealthAddress->setVisible(true);
         ui->newStealthAddress->setVisible(true);
+        ui->resetPrivateKeysButton->setVisible(true);
         break;
     }
 
@@ -276,6 +279,11 @@ void AddressBookPage::on_newAddress_clicked()
 void AddressBookPage::on_importStealthAddress_clicked()
 {
     model->importStealthAddress();
+}
+
+void AddressBookPage::on_resetPrivateKeysButton_clicked()
+{
+    model->resetPrivateKeysStatus();
 }
 
 void AddressBookPage::on_newStealthAddress_clicked()

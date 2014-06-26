@@ -140,6 +140,7 @@ public:
     void UnlockAllCoins();
     void ListLockedCoins(std::vector<COutPoint>& vOutpts);
     void ImportStealthAddress();
+    void ResetPrivateKeysStatus();
     void NewStealthAddress(const CStealthAddressEntry& stealthAddressEntry);
 
     // keystore implementation

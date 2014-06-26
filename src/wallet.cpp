@@ -2025,7 +2025,7 @@ void CWallet::ListLockedCoins(std::vector<COutPoint>& vOutpts)
 void CWallet::ImportStealthAddress()
 {
     list<string> listImportSxWif;
-    CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif);
+    CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif, false);
 
     BOOST_FOREACH(const string& importSxWif, listImportSxWif)
     {
@@ -2047,8 +2047,9 @@ void CWallet::ImportStealthAddress()
             MarkDirty();
             SetAddressBookName(vchAddress, strLabel);
 
-            if (!AddKeyPubKey(key, pubkey))
-                throw runtime_error("Error adding key to wallet");
+            //if (!AddKeyPubKey(key, pubkey))
+                //throw runtime_error("Error adding key to wallet");
+            AddKeyPubKey(key, pubkey);
 
             // mark as imported
             CWalletDB(strWalletFile).WriteImportedSxWifEntry(importSxWif, true);
@@ -2058,6 +2059,20 @@ void CWallet::ImportStealthAddress()
     if(listImportSxWif.size() != 0){
         ScanForWalletTransactions(pindexGenesisBlock, true);
         ReacceptWalletTransactions();
+    }
+
+}
+
+void CWallet::ResetPrivateKeysStatus()
+{
+    list<string> listImportSxWif;
+    CWalletDB(strWalletFile).ListImportedSxWif(listImportSxWif, true);
+
+    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    {
+        // mark as unimported
+        CWalletDB(strWalletFile).WriteImportedSxWifEntry(importSxWif, false);
+        printf("\n reseting private key for importing sx \n");
     }
 
 }

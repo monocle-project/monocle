@@ -170,7 +170,7 @@ void CWalletDB::ListStealthAddress(const string& strAccount, std::list<CStealthA
     pcursor->close();
 }
 
-void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
+void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif, bool isImported)
 {
     Dbc* pcursor = GetCursor();
     if (!pcursor)
@@ -179,7 +179,6 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
     loop
     {
         // Read next record
-        // return Write(make_pair(string("wifsx"), importedSxWif), isImported);
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         if (fFlags == DB_SET_RANGE)
             ssKey << make_pair(string("wifsx"), string(""));
@@ -203,7 +202,7 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
         ssKey >> strWif;
         bool strValue;
         ssValue >> strValue;
-        if (strValue)
+        if (isImported != strValue)
             break;
         listImportedSxWif.push_back(strWif);
     }

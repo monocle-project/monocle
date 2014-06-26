@@ -531,3 +531,15 @@ void AddressTableModel::importStealthAddress()
     wallet->ImportStealthAddress();
 }
 
+void AddressTableModel::resetPrivateKeysStatus()
+{
+    WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+    if(!ctx.isValid())
+    {
+        return ;
+    }
+    wallet->ResetPrivateKeysStatus();
+}
+
+
+

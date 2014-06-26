@@ -162,7 +162,7 @@ public:
     void ListStealthAddress(const std::string& strAccount, std::list<CStealthAddressEntry>& listStealthAddress);
 
     bool WriteImportedSxWifEntry(const std::string& importedSxWif, bool isImported);
-    void ListImportedSxWif(std::list<std::string>& listImportedWif);
+    void ListImportedSxWif(std::list<std::string>& listImportedWif, bool isImported);
 
     DBErrors ReorderTransactions(CWallet*);
     DBErrors LoadWallet(CWallet* pwallet);

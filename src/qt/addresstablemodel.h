@@ -76,6 +76,7 @@ public:
     EditStatus getEditStatus() const { return editStatus; }
 
     void importStealthAddress();
+    void resetPrivateKeysStatus();
 
 private:
     WalletModel *walletModel;

@@ -86,6 +86,8 @@ private slots:
     void on_importStealthAddress_clicked();
     /** New Stealth Address */
     void on_newStealthAddress_clicked();
+    /** Reset Private Keys Status */
+    void on_resetPrivateKeysButton_clicked();
 
 
     /** Set button states based on selected tab and selection */

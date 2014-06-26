@@ -225,6 +225,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getreceivedbyaccount",   &getreceivedbyaccount,   false,     false,      true },
     { "listreceivedbyaddress",  &listreceivedbyaddress,  false,     false,      true },
     { "liststealthaddress",     &liststealthaddress,     false,     false,      true },
+    { "resetprikeystatus",      &resetprikeystatus,     false,     false,      true },
     { "listreceivedbyaccount",  &listreceivedbyaccount,  false,     false,      true },
     { "backupwallet",           &backupwallet,           true,      false,      true },
     { "keypoolrefill",          &keypoolrefill,          true,      false,      true },
