@@ -2030,8 +2030,6 @@ void CWallet::ImportStealthAddress()
     BOOST_FOREACH(const string& importSxWif, listImportSxWif)
     {
         string strLabel = "stealth address transaction";
-        // Whether to perform rescan after import
-        bool fRescan = true;
 
         CBitcoinSecret vchSecret;
         bool fGood = vchSecret.SetString(importSxWif);
@@ -2049,14 +2047,19 @@ void CWallet::ImportStealthAddress()
             MarkDirty();
             SetAddressBookName(vchAddress, strLabel);
 
-            AddKeyPubKey(key, pubkey);
+            if (!AddKeyPubKey(key, pubkey))
+                throw runtime_error("Error adding key to wallet");
 
-            if (fRescan) {
-                ScanForWalletTransactions(pindexGenesisBlock, true);
-                ReacceptWalletTransactions();
-            }
+            // mark as imported
+            CWalletDB(strWalletFile).WriteImportedSxWifEntry(importSxWif, true);
         }
     }
+
+    if(listImportSxWif.size() != 0){
+        ScanForWalletTransactions(pindexGenesisBlock, true);
+        ReacceptWalletTransactions();
+    }
+
 }
 
 

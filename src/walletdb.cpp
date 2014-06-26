@@ -16,7 +16,6 @@ using namespace boost;
 
 static uint64 nAccountingEntryNumber = 0;
 static uint64 nStealthAddressEntryNumber = 0;
-static uint64 nSxWifEntryNumber = 0;
 
 //
 // CWalletDB
@@ -68,14 +67,9 @@ bool CWalletDB::WriteStealthAddressEntry(const CStealthAddressEntry& stealthAddr
     return WriteStealthAddressEntry(++nStealthAddressEntryNumber, stealthAddress);
 }
 
-bool CWalletDB::WriteImportedSxWifEntry(const uint64 nSxWifEntryNum, const string& importedSxWif)
+bool CWalletDB::WriteImportedSxWifEntry(const string& importedSxWif, bool isImported)
 {
-    return Write(make_pair(string("wifsx"), nSxWifEntryNum), importedSxWif);
-}
-
-bool CWalletDB::WriteImportedSxWifEntry(const string& importedSxWif)
-{
-    return WriteImportedSxWifEntry(++nSxWifEntryNumber, importedSxWif);
+    return Write(make_pair(string("wifsx"), importedSxWif), isImported);
 }
 
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
@@ -185,9 +179,10 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
     loop
     {
         // Read next record
+        // return Write(make_pair(string("wifsx"), importedSxWif), isImported);
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         if (fFlags == DB_SET_RANGE)
-            ssKey << make_pair(string("wifsx"), uint64(0));
+            ssKey << make_pair(string("wifsx"), string(""));
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
         fFlags = DB_NEXT;
@@ -204,9 +199,13 @@ void CWalletDB::ListImportedSxWif(std::list<std::string>& listImportedSxWif)
         ssKey >> strType;
         if (strType != "wifsx")
             break;
-        string strValue;
+        string strWif;
+        ssKey >> strWif;
+        bool strValue;
         ssValue >> strValue;
-        listImportedSxWif.push_back(strValue);
+        if (strValue)
+            break;
+        listImportedSxWif.push_back(strWif);
     }
 
     pcursor->close();

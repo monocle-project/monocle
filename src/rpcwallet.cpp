@@ -1736,16 +1736,16 @@ Value importstealthaddress(const Array& params, bool fHelp)
     list<string> listImportSxWif;
     CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif);
 
+    // Whether to perform rescan after import
+    bool fRescan = true;
+    if (params.size() > 1)
+        fRescan = params[1].get_bool();
+
     BOOST_FOREACH(const string& importSxWif, listImportSxWif)
     {
         printf("imported wif priv = %s\n", importSxWif.c_str());
 
         string strLabel = params[0].get_str();
-
-        // Whether to perform rescan after import
-        bool fRescan = true;
-        if (params.size() > 1)
-            fRescan = params[1].get_bool();
 
         CBitcoinSecret vchSecret;
         bool fGood = vchSecret.SetString(importSxWif);
@@ -1763,14 +1763,18 @@ Value importstealthaddress(const Array& params, bool fHelp)
             pwalletMain->MarkDirty();
             pwalletMain->SetAddressBookName(vchAddress, strLabel);
 
-            pwalletMain->AddKeyPubKey(key, pubkey);
-            //if (!pwalletMain->AddKeyPubKey(key, pubkey))
-                //throw JSONRPCError(RPC_WALLET_ERROR, "Error adding stealth address key to wallet");
+            if (!pwalletMain->AddKeyPubKey(key, pubkey))
+                throw JSONRPCError(RPC_WALLET_ERROR, "Error adding stealth address key to wallet");
 
-            if (fRescan) {
-                pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-                pwalletMain->ReacceptWalletTransactions();
-            }
+            // mark as imported
+           CWalletDB(pwalletMain->strWalletFile).WriteImportedSxWifEntry(importSxWif, true);
+        }
+    }
+
+    if(listImportSxWif.size() != 0){
+        if (fRescan) {
+            pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+            pwalletMain->ReacceptWalletTransactions();
         }
     }
 

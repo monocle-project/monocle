@@ -2603,8 +2603,8 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
                             // store wif
                             CWalletDB walletdb(pwalletMain->strWalletFile);
-                            walletdb.WriteImportedSxWifEntry(wif_result);
-                            printf("write wif content to file");
+                            walletdb.WriteImportedSxWifEntry(wif_result, false);
+                            printf("\n write wif content to wallet\n");
                         }
                     }
                 }
