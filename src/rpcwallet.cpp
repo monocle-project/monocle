@@ -700,7 +700,7 @@ Value sendmany(const Array& params, bool fHelp)
         wtx.mapValue["comment"] = params[3].get_str();
 
     set<CBitcoinAddress> setAddress;
-    vector<pair<pair<CScript, int64>, bool>> vecSend;
+    vector<pair<pair<pair<CScript, int64>, ec_secret>, bool>> vecSend;
 
     int64 totalAmount = 0;
     BOOST_FOREACH(const Pair& s, sendTo)
@@ -718,7 +718,8 @@ Value sendmany(const Array& params, bool fHelp)
         int64 nAmount = AmountFromValue(s.value_);
         totalAmount += nAmount;
 
-        vecSend.push_back(make_pair(make_pair(scriptPubKey, nAmount), false));
+        ec_secret ecSecret;
+        vecSend.push_back(make_pair(make_pair(make_pair(scriptPubKey, nAmount), ecSecret), false));
     }
 
     EnsureWalletIsUnlocked();
@@ -732,8 +733,8 @@ Value sendmany(const Array& params, bool fHelp)
     CReserveKey keyChange(pwalletMain);
     int64 nFeeRequired = 0;
     string strFailReason;
-    ec_secret ephem_secret;
-    bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason, ephem_secret);
+
+    bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason);
     if (!fCreated)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
     if (!pwalletMain->CommitTransaction(wtx, keyChange))
@@ -1722,32 +1723,53 @@ Value liststealthaddress(const Array& params, bool fHelp)
 
 }
 
+Value resetprikeystatus(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+              "resetprikeystatus\n"
+              "Resets all private keys which belong to Monocle Stealth address");
+
+    list<CStealthAddressWifEntry> listImportSxWif;
+    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif, true);
+
+    printf("\n size of listImportSxWif = %d \n", listImportSxWif.size());
+
+    BOOST_FOREACH(const CStealthAddressWifEntry& item, listImportSxWif)
+    {
+        // mark as unimported
+        CWalletDB(pwalletMain->strWalletFile).WriteImportedSxWifEntry(item, false);
+        printf("\n reseting private key for importing sx \n");
+    }
+
+    return Value::null;
+
+}
+
 Value importstealthaddress(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() != 1)
         throw runtime_error(
-              "importstealthaddress [label] [rescan=true]\n"
+              "importstealthaddress [rescan=true]\n"
               "Adds a private key from stealth address transactions to your wallet.");
 
 
     EnsureWalletIsUnlocked();
 
-    list<string> listImportSxWif;
-    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif);
+    list<CStealthAddressWifEntry> listImportSxWif;
+    CWalletDB(pwalletMain->strWalletFile).ListImportedSxWif(listImportSxWif, false);
 
-    BOOST_FOREACH(const string& importSxWif, listImportSxWif)
+    // Whether to perform rescan after import
+    bool fRescan = true;
+    if (params.size() > 1)
+        fRescan = params[1].get_bool();
+
+    BOOST_FOREACH(const CStealthAddressWifEntry& item, listImportSxWif)
     {
-        printf("imported wif priv = %s\n", importSxWif.c_str());
-
-        string strLabel = params[0].get_str();
-
-        // Whether to perform rescan after import
-        bool fRescan = true;
-        if (params.size() > 1)
-            fRescan = params[1].get_bool();
+        string strLabel = item.stealthAddress;
 
         CBitcoinSecret vchSecret;
-        bool fGood = vchSecret.SetString(importSxWif);
+        bool fGood = vchSecret.SetString(item.wif);
 
         if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid stealth address private key encoding");
 
@@ -1762,14 +1784,18 @@ Value importstealthaddress(const Array& params, bool fHelp)
             pwalletMain->MarkDirty();
             pwalletMain->SetAddressBookName(vchAddress, strLabel);
 
-            pwalletMain->AddKeyPubKey(key, pubkey);
-            //if (!pwalletMain->AddKeyPubKey(key, pubkey))
-                //throw JSONRPCError(RPC_WALLET_ERROR, "Error adding stealth address key to wallet");
+            if (!pwalletMain->AddKeyPubKey(key, pubkey))
+                throw JSONRPCError(RPC_WALLET_ERROR, "Error adding stealth address key to wallet");
 
-            if (fRescan) {
-                pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-                pwalletMain->ReacceptWalletTransactions();
-            }
+            // mark as imported
+           CWalletDB(pwalletMain->strWalletFile).WriteImportedSxWifEntry(item, true);
+        }
+    }
+
+    if(listImportSxWif.size() != 0){
+        if (fRescan) {
+            pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+            pwalletMain->ReacceptWalletTransactions();
         }
     }
 

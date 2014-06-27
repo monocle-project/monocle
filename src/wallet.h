@@ -140,6 +140,7 @@ public:
     void UnlockAllCoins();
     void ListLockedCoins(std::vector<COutPoint>& vOutpts);
     void ImportStealthAddress();
+    void ResetPrivateKeysStatus();
     void NewStealthAddress(const CStealthAddressEntry& stealthAddressEntry);
 
     // keystore implementation
@@ -188,10 +189,10 @@ public:
     int64 GetBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;
-    bool CreateTransaction(const std::vector<std::pair<std::pair<CScript, int64>, bool>>& vecSend,
-                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl *coinControl=NULL);
-    bool CreateTransaction(CScript scriptPubKey, int64 nValue, bool isStealthAddressTransaction,
-                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ephem_secret, const CCoinControl *coinControl=NULL);
+    bool CreateTransaction(const std::vector<std::pair<std::pair<std::pair<CScript, int64>, ec_secret>, bool>>& vecSend,
+                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, const CCoinControl *coinControl=NULL);
+    bool CreateTransaction(CScript scriptPubKey, int64 nValue, bool isStealthAddressTx,
+                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason, ec_secret ecSecret, const CCoinControl *coinControl=NULL);
 
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
@@ -919,6 +920,37 @@ public:
         READWRITE(stealthAddress);
         READWRITE(spendSecret);
         READWRITE(scanSecret);
+    )
+};
+
+
+/** Stealth WIF
+ */
+class CStealthAddressWifEntry
+{
+public:
+    std::string wif;
+    std::string stealthAddress;
+    uint64 nEntryNo;
+
+    CStealthAddressWifEntry()
+    {
+        SetNull();
+    }
+
+    void SetNull()
+    {
+        wif.clear();
+        stealthAddress.clear();
+    }
+
+    IMPLEMENT_SERIALIZE
+    (
+        CStealthAddressWifEntry& me = *const_cast<CStealthAddressWifEntry*>(this);
+        if (!(nType & SER_GETHASH))
+            READWRITE(nVersion);
+        READWRITE(wif);
+        READWRITE(stealthAddress);
     )
 };
 

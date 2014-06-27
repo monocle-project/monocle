@@ -203,6 +203,13 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
+    stealthAddressAction = new QAction(QIcon(":/icons/stealth_addresses"), tr("&Stealth Addresses"), this);
+    stealthAddressAction->setStatusTip(tr("Show the list of stealth addresses for receiving payments"));
+    stealthAddressAction->setToolTip(stealthAddressAction->statusTip());
+    stealthAddressAction->setCheckable(true);
+    stealthAddressAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    tabGroup->addAction(stealthAddressAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -213,6 +220,8 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
+    connect(stealthAddressAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(stealthAddressAction, SIGNAL(triggered()), this, SLOT(gotoStealthAddressPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -295,8 +304,10 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(overviewAction);
     toolbar->addAction(sendCoinsAction);
     toolbar->addAction(receiveCoinsAction);
+    toolbar->addAction(stealthAddressAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
+
 }
 
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
@@ -373,6 +384,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     signMessageAction->setEnabled(enabled);
     verifyMessageAction->setEnabled(enabled);
     addressBookAction->setEnabled(enabled);
+    stealthAddressAction->setEnabled(enabled);
 }
 
 void BitcoinGUI::createTrayIcon()
@@ -493,6 +505,12 @@ void BitcoinGUI::gotoReceiveCoinsPage()
 {
     if (walletFrame) walletFrame->gotoReceiveCoinsPage();
 }
+
+void BitcoinGUI::gotoStealthAddressPage()
+{
+    if (walletFrame) walletFrame->gotoStealthAddressPage();
+}
+
 
 void BitcoinGUI::gotoSendCoinsPage(QString addr)
 {

@@ -1,3 +1,9 @@
+// Copyright (c) 2014 bushido
+// Copyright (c) 2014 The Vertcoin developers
+// Copyright (c) 2014 https://github.com/spesmilo/sx
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_STEALTH_H
 #define BITCOIN_STEALTH_H
 
@@ -11,7 +17,6 @@
 #include <array>
 #include <utility>
 #include <secp256k1.h>
-
 
 #include "base58.h"
 constexpr uint8_t nonce_version = 0x06;
@@ -182,27 +187,11 @@ const short_hash null_short_hash = {
 class payment_address
 {
 public:
-    // testnet
-    enum
-        {
-            pubkey_version = 0x41,
-            script_version = 0xb2,
-            wif_version = 0xc1,
-            invalid_version = 0xff
-        };
+  enum
+     {
+         invalid_version = 0xff
+     };
 
-    /*
-     * mainnet
-     * enum
-    {
-        pubkey_version = 0x32,
-        script_version = 0x07,
-        wif_version = 0xb2,
-        invalid_version = 0xff
-    };
-    */
-
-   // wif_version = pubkey_version + 128
    payment_address();
    payment_address(uint8_t version, const short_hash& hash);
    payment_address(const std::string& encoded_address);
@@ -222,7 +211,6 @@ private:
 void set_public_key(payment_address& address, const data_chunk& public_key);
 
 const char base58_chars[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
 
 bool is_base58(const char c);
 bool is_base58(const std::string& text);

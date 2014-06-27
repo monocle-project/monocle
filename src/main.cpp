@@ -2537,22 +2537,25 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         vtxOut = tx.vout;
         bool IsStealthTx = false;
 
-        vector<boost::tuple<string, ec_secret, ec_secret, ec_point> > vRecvAddress;
+        vector<boost::tuple<string, ec_secret, ec_secret, ec_point, string> > vRecvAddress;
         ec_secret scan_secret;
         ec_secret spend_secret;
         ec_point spend_pubkey;
         ec_point ephem_pubkey;
-        string ephemPubkey;
 
         // check sx transaction
         for(unsigned int i = 0; i < vtxOut.size(); i++){
             CTxOut txOut;
             txOut = vtxOut[i];
 
+
             if(txOut.scriptPubKey[0] == OP_RETURN && txOut.scriptPubKey[1] == 0x21){
 
                 // set flag
                 IsStealthTx = true;
+
+                // clear old ephem_pubkey
+                ephem_pubkey.clear();
 
                 // extract ephem_pubkey
                 ephem_pubkey.insert(ephem_pubkey.end(), txOut.scriptPubKey.begin() + 2, txOut.scriptPubKey.begin() + 35);
@@ -2571,7 +2574,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     payment_address return_addr;
                     set_public_key(return_addr, uncover_pubkey);
                     string strRevcAddress = return_addr.encoded();
-                    vRecvAddress.push_back(boost::make_tuple(strRevcAddress, scan_secret, spend_secret, ephem_pubkey));
+                    vRecvAddress.push_back(boost::make_tuple(strRevcAddress, scan_secret, spend_secret, ephem_pubkey, stealthAddress.stealthAddress));
                 }
             }
         }
@@ -2589,9 +2592,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                     CBitcoinAddress bitAddr;
                     bitAddr.Set(txoutAddr);
 
-                    BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point)& item, vRecvAddress)
+                    BOOST_FOREACH(const TUPLETYPE(string, ec_secret, ec_secret, ec_point, string)& item, vRecvAddress)
                     {
                         if(boost::get<0>(item).compare(bitAddr.ToString()) == 0){
+
                             ec_secret secret = uncover_stealth_secret(
                                         boost::get<3>(item), boost::get<1>(item), boost::get<2>(item));
 
@@ -2599,8 +2603,11 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
                             // store wif
                             CWalletDB walletdb(pwalletMain->strWalletFile);
-                            walletdb.WriteImportedSxWifEntry(wif_result);
-                            printf("write wif content to file");
+                            CStealthAddressWifEntry itemImportWif;
+                            itemImportWif.stealthAddress = boost::get<4>(item);
+                            itemImportWif.wif = wif_result;
+                            walletdb.WriteImportedSxWifEntry(itemImportWif, false);
+                            printf("\n write wif content to wallet\n");
                         }
                     }
                 }
