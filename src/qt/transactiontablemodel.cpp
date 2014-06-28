@@ -12,7 +12,7 @@
 #include "optionsmodel.h"
 #include "addresstablemodel.h"
 #include "bitcoinunits.h"
-
+#include "script.h"
 #include "wallet.h"
 #include "ui_interface.h"
 

@@ -8,8 +8,8 @@
 #include "crypter.h"
 #include "sync.h"
 #include <boost/signals2/signal.hpp>
-
-class CScript;
+#include "script.h"
+//class CScript;
 
 /** A virtual base class for key stores */
 class CKeyStore

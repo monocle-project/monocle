@@ -9,7 +9,6 @@
 #include "db.h"
 #include "base58.h"
 
-
 class CKeyPool;
 class CAccount;
 class CAccountingEntry;
