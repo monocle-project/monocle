@@ -164,8 +164,7 @@ test check: test_monocle FORCE
 # LevelDB support
 #
 MAKEOVERRIDES =
-#LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a $(SECP_PATH)/lib/libsecp256k1.a
-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a /usr/local/lib/libsecp256k1.a /usr/lib/x86_64-linux-gnu/libgmp.a
+LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a $(SECP_PATH)/libsecp256k1.a $(GMP_PATH)/libgmp.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
 leveldb/libleveldb.a:

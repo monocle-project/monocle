@@ -61,7 +61,8 @@ script: |
   export PKG_CONFIG_PATH=$STAGING/lib/pkgconfig
   sh autogen.sh
   unset FAKETIME # unset fake time during configure, as it does some clock sanity tests
-  ./configure --prefix=$STAGING --disable-shared --enable-static --with-bignum=gmp --with-field=gmp --disable-benchmark --disable-tests
+  sed -i'poo' 's/as.fn.error.....newly created file/as_echo \$\? \"newly created file/g' configure
+  CFLAGS="-I$STAGING/include" LDFLAGS="-L$STAGING/lib" ./configure --prefix=$STAGING --disable-shared --enable-static --with-bignum=gmp --with-field=gmp --disable-benchmark --disable-tests
   export FAKETIME=$REFERENCE_DATETIME
   unset PKG_CONFIG_PATH
   make
