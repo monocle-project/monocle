@@ -8,8 +8,8 @@
 #include "crypter.h"
 #include "sync.h"
 #include <boost/signals2/signal.hpp>
-#include "script.h"
-//class CScript;
+
+class CScript;
 
 /** A virtual base class for key stores */
 class CKeyStore
@@ -47,6 +47,7 @@ protected:
     ScriptMap mapScripts;
 
 public:
+    CBasicKeyStore();
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey);
     bool HaveKey(const CKeyID &address) const
     {
