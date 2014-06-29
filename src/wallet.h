@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <stdlib.h>
+
 #include "main.h"
 #include "key.h"
 #include "keystore.h"
@@ -16,7 +17,6 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "walletdb.h"
-
 
 extern bool bSpendZeroConfChange;
 
@@ -95,25 +95,9 @@ public:
     MasterKeyMap mapMasterKeys;
     unsigned int nMasterKeyMaxID;
 
-    CWallet()
-    {
-        nWalletVersion = FEATURE_BASE;
-        nWalletMaxVersion = FEATURE_BASE;
-        fFileBacked = false;
-        nMasterKeyMaxID = 0;
-        pwalletdbEncryption = NULL;
-        nOrderPosNext = 0;
-    }
-    CWallet(std::string strWalletFileIn)
-    {
-        nWalletVersion = FEATURE_BASE;
-        nWalletMaxVersion = FEATURE_BASE;
-        strWalletFile = strWalletFileIn;
-        fFileBacked = true;
-        nMasterKeyMaxID = 0;
-        pwalletdbEncryption = NULL;
-        nOrderPosNext = 0;
-    }
+    CWallet();
+
+    CWallet(std::string strWalletFileIn);
 
     std::map<uint256, CWalletTx> mapWallet;
     int64 nOrderPosNext;
@@ -304,7 +288,6 @@ public:
     {
         return setKeyPool.size();
     }
-
 
     bool GetTransaction(const uint256 &hashTx, CWalletTx& wtx);
 
@@ -913,7 +896,6 @@ public:
 
     IMPLEMENT_SERIALIZE
     (
-        CStealthAddressEntry& me = *const_cast<CStealthAddressEntry*>(this);
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         // Note: strAccount is serialized as part of the key, not here.
@@ -946,7 +928,6 @@ public:
 
     IMPLEMENT_SERIALIZE
     (
-        CStealthAddressWifEntry& me = *const_cast<CStealthAddressWifEntry*>(this);
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         READWRITE(wif);

@@ -47,6 +47,7 @@ protected:
     ScriptMap mapScripts;
 
 public:
+    CBasicKeyStore();
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey);
     bool HaveKey(const CKeyID &address) const
     {
@@ -171,6 +172,5 @@ public:
      */
     boost::signals2::signal<void (CCryptoKeyStore* wallet)> NotifyStatusChanged;
 };
-
 
 #endif

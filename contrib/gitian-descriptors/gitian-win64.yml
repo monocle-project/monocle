@@ -15,12 +15,12 @@ packages:
 - "libgmp10"
 reference_datetime: "2011-01-30 00:00:00"
 remotes:
-- "url": "file:///home/omi/monocle-sx"
+- "url": "https://bitbucket.org/erik123/mondev.git"
   "dir": "monocle"
 files:
 - "qt-win32-4.8.5-gitian-r5.zip"
 - "boost-win32-1.55.0-gitian-r6.zip"
-- "monocle-deps-win32-gitian-r3.zip"
+- "monocle-deps-win32-gitian-r4.zip"
 script: |
   #
   STAGING=$HOME/staging
@@ -30,7 +30,7 @@ script: |
   cd $STAGING
   unzip ../build/qt-win32-4.8.5-gitian-r5.zip
   unzip ../build/boost-win32-1.55.0-gitian-r6.zip
-  unzip ../build/monocle-deps-win32-gitian-r3.zip
+  unzip ../build/monocle-deps-win32-gitian-r4.zip
   cd $HOME/build/
   #
   cd monocle
