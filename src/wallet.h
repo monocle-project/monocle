@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <stdlib.h>
+
 #include "main.h"
 #include "key.h"
 #include "keystore.h"
@@ -16,7 +17,6 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "walletdb.h"
-
 
 extern bool bSpendZeroConfChange;
 
@@ -288,7 +288,6 @@ public:
     {
         return setKeyPool.size();
     }
-
 
     bool GetTransaction(const uint256 &hashTx, CWalletTx& wtx);
 

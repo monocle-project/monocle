@@ -1212,7 +1212,6 @@ bool CWallet::CreateTransaction(const vector<pair<pair<pair<CScript, int64>, ec_
     int64 nValue = 0;
     BOOST_FOREACH (const PAIRTYPE(PAIRTYPE(PAIRTYPE(CScript, int64), ec_secret), bool)& s, vecSend)
     {
-
         if (nValue < 0)
         {
             strFailReason = _("Transaction amounts must be positive");
@@ -1356,8 +1355,6 @@ bool CWallet::CreateTransaction(const vector<pair<pair<pair<CScript, int64>, ec_
                 }
                 else
                     reservekey.ReturnKey();
-
-
 
                 // Fill vin
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
@@ -1649,8 +1646,6 @@ bool CWallet::SetDefaultKey(const CPubKey &vchPubKey)
     return true;
 }
 
-
-
 bool GetWalletFile(CWallet* pwallet, string &strWalletFileOut)
 {
     if (!pwallet->fFileBacked)
@@ -1712,7 +1707,6 @@ bool CWallet::TopUpKeyPool()
     }
     return true;
 }
-
 
 void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
 {

@@ -1,7 +1,7 @@
 Monocle integration/staging tree
 ================================
 
-http://www.monocle.org
+https://mon.vertcoin.org/
 
 Copyright (c) 2009-2013 Bitcoin Developers
 Copyright (c) 2014 Monocle Developers
@@ -18,7 +18,7 @@ Monocle is a merge mineable N-factor Scrypt coin, released by the Vertcoin devel
  - 12 block retarget using BRNDF with a 180 block lookback
 
 For more information, as well as an immediately useable, binary version of
-the Monocle client sofware, see http://www.monocle.org.
+the Monocle client sofware, see https://github.com/erkmos/monocle/releases.
 
 License
 -------
@@ -37,7 +37,7 @@ development team members simply pulls it.
 
 If it is a *more complicated or potentially controversial* change, then the patch
 submitter will be asked to start a discussion (if they haven't already) on the
-[Monocle forum](http://forum.monocle.).
+[Vertcoin forum](http://vertcoinforum.com).
 
 The patch will be accepted if there is broad consensus that it is a good thing.
 Developers should expect to rework and resubmit patches if the code doesn't

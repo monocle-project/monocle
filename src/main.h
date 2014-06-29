@@ -12,8 +12,6 @@
 #include "scrypt.h"
 #include "stealth.h"
 
-
-
 #include <list>
 
 class CWallet;

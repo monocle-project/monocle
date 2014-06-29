@@ -546,6 +546,3 @@ void WalletModel::listLockedCoins(std::vector<COutPoint>& vOutpts)
 {
     wallet->ListLockedCoins(vOutpts);
 }
-
-
-

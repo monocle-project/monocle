@@ -19,8 +19,6 @@
 #include "init.h"
 #include "base58.h"
 
-
-
 using namespace std;
 using namespace boost;
 using namespace boost::assign;
@@ -70,7 +68,6 @@ string AccountFromValue(const Value& value)
     return strAccount;
 }
 
-
 Value getinfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -103,11 +100,10 @@ Value getinfo(const Array& params, bool fHelp)
     if (pwalletMain && pwalletMain->IsCrypted())
         obj.push_back(Pair("unlocked_until", (boost::int64_t)nWalletUnlockTime));
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
-
     return obj;
-
-
 }
+
+
 
 Value getnewaddress(const Array& params, bool fHelp)
 {
@@ -314,7 +310,6 @@ Value sendtoaddress(const Array& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
 }
-
 
 Value listaddressgroupings(const Array& params, bool fHelp)
 {
@@ -733,7 +728,6 @@ Value sendmany(const Array& params, bool fHelp)
     CReserveKey keyChange(pwalletMain);
     int64 nFeeRequired = 0;
     string strFailReason;
-
     bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason);
     if (!fCreated)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);

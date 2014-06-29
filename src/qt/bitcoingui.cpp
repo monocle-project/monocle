@@ -307,7 +307,6 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(stealthAddressAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-
 }
 
 void BitcoinGUI::setClientModel(ClientModel *clientModel)

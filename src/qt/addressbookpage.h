@@ -82,13 +82,6 @@ private slots:
     void onEditAction();
     /** Export button clicked */
     void on_exportButton_clicked();
-    /** Imported Stealth Address Transactions */
-    void on_importStealthAddress_clicked();
-    /** New Stealth Address */
-    void on_newStealthAddress_clicked();
-    /** Reset Private Keys Status */
-    void on_resetPrivateKeysButton_clicked();
-
 
     /** Set button states based on selected tab and selection */
     void selectionChanged();

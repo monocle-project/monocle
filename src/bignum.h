@@ -588,4 +588,3 @@ inline bool operator<(const CBigNum& a, const CBigNum& b)  { return (BN_cmp(&a, 
 inline bool operator>(const CBigNum& a, const CBigNum& b)  { return (BN_cmp(&a, &b) > 0); }
 
 #endif
-
