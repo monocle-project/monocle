@@ -896,7 +896,6 @@ public:
 
     IMPLEMENT_SERIALIZE
     (
-        CStealthAddressEntry& me = *const_cast<CStealthAddressEntry*>(this);
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         // Note: strAccount is serialized as part of the key, not here.
@@ -929,7 +928,6 @@ public:
 
     IMPLEMENT_SERIALIZE
     (
-        CStealthAddressWifEntry& me = *const_cast<CStealthAddressWifEntry*>(this);
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
         READWRITE(wif);
