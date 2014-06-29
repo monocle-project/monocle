@@ -26,7 +26,8 @@ files:
 - "zlib-1.2.8.tar.gz"
 - "libpng-1.6.10.tar.gz"
 - "qrencode-3.4.3.tar.bz2"
-- "secp256k1-ebfa43b20a.zip"
+- "secp256k1-61a203517a.zip"
+- "gmp-6.0.0a.tar.bz2"
 script: |
   #
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
@@ -41,7 +42,8 @@ script: |
   echo "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d  zlib-1.2.8.tar.gz"      | sha256sum -c
   echo "b0206a22b49c91fc5521b2cfb1c251433a37aed0a645bc504ab3d061f27e4d51  libpng-1.6.10.tar.gz"    | sha256sum -c
   echo "dfd71487513c871bad485806bfd1fdb304dedc84d2b01a8fb8e0940b50597a98  qrencode-3.4.3.tar.bz2" | sha256sum -c
-  echo "5bf684ebe8f4f4a913f7d0f153d6355555cc6518f95775ebb83fe62c638bc1b4  secp256k1-ebfa43b20a.zip" |sha256sum -c
+  echo "ac578d1fb962d651bbf729900d8b747195f8a02e864aa503c6e657834ccc8e52  secp256k1-61a203517a.zip" | sha256sum -c
+  echo "7f8e9a804b9c6d07164cf754207be838ece1219425d64e28cfa3e70d5c759aaf  gmp-6.0.0a.tar.bz2" | sha256sum -c
   #
   mkdir -p $INSTALLPREFIX
   #
@@ -52,14 +54,12 @@ script: |
   make install_sw
   cd ..
   #
-  unzip secp256k1-ebfa43b20a.zip
-  cd secp256k1-ebfa43b20a10d321b0d3a04c118cef96b803e061
+  unzip secp256k1-61a203517a.zip
+  cd secp256k1-61a203517a4f99306da7ec8b5fb96fc5ee5f94d3
   export PKG_CONFIG_PATH=$INSTALLPREFIX/lib/pkgconfig
-  aclocal
-  autoreconf --install
-  automake
+  sh autogen.sh
   unset FAKETIME # unset fake time during configure, as it does some clock sanity tests
-  CFLAGS="-I$INSTALLPREFIX/include" LDFLAGS="-L$INSTALLPREFIX/lib -lcrypto -lssl" ./configure --prefix=$INSTALLPREFIX --disable-shared --enable-static --with-bignum=openssl --with-field=auto --disable-benchmark --disable-tests --host=$HOST
+  ./configure --prefix=$INSTALLPREFIX --disable-shared --enable-static --with-bignum=gmp --with-field=gmp --disable-benchmark --disable-tests --host=$HOST
   export FAKETIME=$REFERENCE_DATETIME
   unset PKG_CONFIG_PATH
   make
@@ -119,4 +119,4 @@ script: |
   cd ..
   #
   cd $INSTALLPREFIX
-  zip -r $OUTDIR/monocle-deps-win32-gitian-r3.zip include lib
+  zip -r $OUTDIR/monocle-deps-win32-gitian-r4.zip include lib

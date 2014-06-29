@@ -15,7 +15,6 @@ packages:
 - "bsdmainutils"
 - "autoconf"
 - "automake"
-- "libtool"
 reference_datetime: "2013-06-01 00:00:00"
 remotes: []
 files:
@@ -23,7 +22,8 @@ files:
 - "miniupnpc-1.9.tar.gz"
 - "qrencode-3.4.3.tar.bz2"
 - "db-4.8.30.NC.tar.gz"
-- "secp256k1-ebfa43b20a.zip"
+- "secp256k1-61a203517a.zip"
+- "gmp-6.0.0a.tar.bz2"
 script: |
   STAGING="$HOME/install"
   TEMPDIR="$HOME/tmp"
@@ -37,7 +37,8 @@ script: |
   echo "2923e453e880bb949e3d4da9f83dd3cb6f08946d35de0b864d0339cf70934464  miniupnpc-1.9.tar.gz"   | sha256sum -c
   echo "dfd71487513c871bad485806bfd1fdb304dedc84d2b01a8fb8e0940b50597a98  qrencode-3.4.3.tar.bz2" | sha256sum -c
   echo "12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz"    | sha256sum -c
-  echo "5bf684ebe8f4f4a913f7d0f153d6355555cc6518f95775ebb83fe62c638bc1b4  secp256k1-ebfa43b20a.zip" |sha256sum -c
+  echo "ac578d1fb962d651bbf729900d8b747195f8a02e864aa503c6e657834ccc8e52  secp256k1-61a203517a.zip" | sha256sum -c
+  echo "7f8e9a804b9c6d07164cf754207be838ece1219425d64e28cfa3e70d5c759aaf  gmp-6.0.0a.tar.bz2" | sha256sum -c
   #
   tar xzf openssl-1.0.1h.tar.gz
   cd openssl-1.0.1h
@@ -48,14 +49,19 @@ script: |
   make install_sw
   cd ..
   #
-  unzip secp256k1-ebfa43b20a.zip
-  cd secp256k1-ebfa43b20a10d321b0d3a04c118cef96b803e061
+  tar xjf gmp-6.0.0a.tar.bz2
+  cd gmp-6.0.0
+  ./configure --prefix=$STAGING --enable-cxx
+  make $MAKEOPTS
+  make install
+  cd ..
+  #
+  unzip ssecp256k1-61a203517a.zip
+  cd secp256k1-61a203517a4f99306da7ec8b5fb96fc5ee5f94d3
   export PKG_CONFIG_PATH=$STAGING/lib/pkgconfig
-  aclocal
-  autoreconf --install
-  automake
+  sh autogen.sh
   unset FAKETIME # unset fake time during configure, as it does some clock sanity tests
-  CFLAGS="-I$STAGING/include" LDFLAGS="-L$STAGING/lib -lcrypto -lssl" ./configure --prefix=$STAGING --disable-shared --enable-static --with-bignum=openssl --with-field=auto --disable-benchmark --disable-tests
+  ./configure --prefix=$STAGING --disable-shared --enable-static --with-bignum=gmp --with-field=gmp --disable-benchmark --disable-tests
   export FAKETIME=$REFERENCE_DATETIME
   unset PKG_CONFIG_PATH
   make
@@ -99,5 +105,5 @@ script: |
   done
   #
   cd $STAGING
-  find include lib bin host | sort | zip -X@ $OUTDIR/monocle-deps-linux${GBUILD_BITS}-gitian-sx.zip
+  find include lib bin host | sort | zip -X@ $OUTDIR/monocle-deps-linux${GBUILD_BITS}-gitian-r3.zip
 

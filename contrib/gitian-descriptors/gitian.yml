@@ -14,11 +14,11 @@ packages:
 - "libpng12-dev"
 reference_datetime: "2011-01-30 00:00:00"
 remotes:
-- "url": "file:///home/omi/monocle-sx"
+- "url": "https://bitbucket.org/erik123/mondev.git"
   "dir": "monocle"
 files:
-- "monocle-deps-linux32-gitian-sx.zip"
-- "monocle-deps-linux64-gitian-sx.zip"
+- "monocle-deps-linux32-gitian-r3.zip"
+- "monocle-deps-linux64-gitian-r3.zip"
 - "boost-linux32-1.55.0-gitian-r1.zip"
 - "boost-linux64-1.55.0-gitian-r1.zip"
 script: |
@@ -27,7 +27,7 @@ script: |
   #
   mkdir -p $INSTDIR
   cd $INSTDIR
-  unzip ../build/monocle-deps-linux${GBUILD_BITS}-gitian-sx.zip
+  unzip ../build/monocle-deps-linux${GBUILD_BITS}-gitian-r3.zip
   unzip ../build/boost-linux${GBUILD_BITS}-1.55.0-gitian-r1.zip
   cd ..
   #
