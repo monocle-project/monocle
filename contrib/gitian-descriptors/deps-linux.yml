@@ -51,12 +51,12 @@ script: |
   #
   tar xjf gmp-6.0.0a.tar.bz2
   cd gmp-6.0.0
-  ./configure --prefix=$STAGING --enable-cxx
+  ./configure --prefix=$STAGING --enable-cxx --disable-shared --enable-static
   make $MAKEOPTS
   make install
   cd ..
   #
-  unzip ssecp256k1-61a203517a.zip
+  unzip secp256k1-61a203517a.zip
   cd secp256k1-61a203517a4f99306da7ec8b5fb96fc5ee5f94d3
   export PKG_CONFIG_PATH=$STAGING/lib/pkgconfig
   sh autogen.sh
