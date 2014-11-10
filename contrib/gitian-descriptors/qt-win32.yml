@@ -14,7 +14,7 @@ reference_datetime: "2011-01-30 00:00:00"
 remotes: []
 files:
 - "qt-everywhere-opensource-src-4.8.5.tar.gz"
-- "monocle-deps-win32-gitian-r2.zip"
+- "monocle-deps-win32-gitian-r4.zip"
 script: |
   #
   HOST=i686-w64-mingw32
@@ -61,4 +61,4 @@ script: |
 
   # as zip stores file timestamps, use faketime to intercept stat calls to set dates for all files to reference date
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
-  zip -r $OUTDIR/qt-win32-4.8.5-gitian-r5.zip *
+  zip -r $OUTDIR/qt-win32-4.8.5-gitian-r6.zip *
