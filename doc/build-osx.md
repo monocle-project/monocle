@@ -29,7 +29,7 @@ Notes
 See `doc/readme-qt.rst` for instructions on building Monocle, the
 graphical user interface.
 
-Tested on OS X 10.5 through 10.8 on Intel processors only. PPC is not
+Tested on OS X 10.5 through 10.10 on Intel processors only. PPC is not
 supported because it is big-endian.
 
 All of the commands should be executed in a Terminal application. The
@@ -76,7 +76,7 @@ Installing the dependencies using MacPorts is very straightforward.
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone git@github.com:monocle-project/monocle.git monocle
+        git clone git@github.com:monocle/monocle.git monocle
         cd monocle
 
 2.  Build monocled:
@@ -93,13 +93,22 @@ Instructions: HomeBrew
 
 #### Install dependencies using Homebrew
 
-        brew install boost miniupnpc openssl berkeley-db4
+        brew install boost miniupnpc openssl berkeley-db4 gmp
+
+#####Install secp256k1
+
+        wget https://github.com/bitcoin/secp256k1/archive/61a203517a4f99306da7ec8b5fb96fc5ee5f94d3.zip
+        cd secp256k1-master
+        sh autogen.sh
+        ./configure
+        make
+        sudo make install
 
 Note: After you have installed the dependencies, you should check that the Brew installed version of OpenSSL is the one available for compilation. You can check this by typing
 
         openssl version
 
-into Terminal. You should see OpenSSL 1.0.1e 11 Feb 2013.
+into Terminal. You should see OpenSSL 1.0.1j 15 Oct 2014.
 
 If not, you can ensure that the Brew OpenSSL is correctly linked by running
 
@@ -111,18 +120,10 @@ Rerunning "openssl version" should now return the correct version.
 
 1. Clone the github tree to get the source code and go into the directory.
 
-        git clone git@github.com:monocle-project/monocle.git monocle
+        git clone git@github.com:monocle/monocle.git monocle
         cd monocle
 
-2.  Modify source in order to pick up the `openssl` library.
-
-    Edit `makefile.osx` to account for library location differences. There's a
-    diff in `contrib/homebrew/makefile.osx.patch` that shows what you need to
-    change, or you can just patch by doing
-
-        patch -p1 < contrib/homebrew/makefile.osx.patch
-
-3.  Build monocled:
+2.  Build monocled:
 
         cd src
         make -f makefile.osx
@@ -161,7 +162,7 @@ compiled on an OS X 10.6 32-bit machine to workaround that problem.
 
 Once dependencies are compiled, creating `Monocle.app` is easy:
 
-    make -f Makefile.osx RELEASE=1
+    make -f makefile.osx
 
 Running
 -------

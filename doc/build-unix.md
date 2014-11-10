@@ -25,6 +25,8 @@ Dependencies
  libdb4.8    Berkeley DB       Blockchain & wallet storage
  libboost    Boost             C++ Library
  miniupnpc   UPnP Support      Optional firewall-jumping support
+ secp256k1   SX signing        Stand-alone ECDSA library for the secp256k1 curve
+ libgmp      Big Integer       Arbitrary precision arithmetic
 
 [miniupnpc](http://miniupnp.free.fr/) may be used for UPnP port mapping.  It can be downloaded from [here](
 http://miniupnp.tuxfamily.org/files/).  UPnP support is compiled in and
@@ -45,11 +47,13 @@ Licenses of statically linked libraries:
  miniupnpc     New (3-clause) BSD license
 
 - Versions used in this release:
--  GCC           4.3.3
--  OpenSSL       1.0.1c
+-  GCC           4.6.3
+-  OpenSSL       1.0.1j
 -  Berkeley DB   4.8.30.NC
--  Boost         1.37
--  miniupnpc     1.6
+-  Boost         1.55
+-  miniupnpc     1.9
+-  libgmp        6.0.0a
+-  secp256k1     61a203
 
 Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
@@ -57,6 +61,7 @@ Build requirements:
 
 	sudo apt-get install build-essential
 	sudo apt-get install libssl-dev
+  sudo apt-get install libgmp-dev
 
 for Ubuntu 12.04:
 
@@ -68,10 +73,12 @@ for Ubuntu 12.04:
  but using these will break binary wallet compatibility, and is not recommended.
 
 for other Ubuntu & Debian:
-
+  sudo add-apt-repository ppa:bitcoin/bitcoin
+  sudo apt-get update
 	sudo apt-get install libdb4.8-dev
 	sudo apt-get install libdb4.8++-dev
-	sudo apt-get install libboost1.37-dev
+	sudo apt-get install libboost-all-dev
+  
  (If using Boost 1.37, append -mt to the boost libraries in the makefile)
 
 Optional:
@@ -87,8 +94,8 @@ symbols, which reduces the executable size by about 90%.
 
 miniupnpc
 ---------
-	tar -xzvf miniupnpc-1.6.tar.gz
-	cd miniupnpc-1.6
+	tar -xzvf miniupnpc-1.9.tar.gz
+	cd miniupnpc-1.9
 	make
 	sudo su
 	make install
@@ -109,6 +116,16 @@ If you need to build Boost yourself:
 	sudo su
 	./bootstrap.sh
 	./bjam install
+
+secp256k1
+---------
+
+  wget https://github.com/bitcoin/secp256k1/archive/61a203517a4f99306da7ec8b5fb96fc5ee5f94d3.zip
+  cd secp256k1-master
+  sh autogen.sh
+  ./configure
+  make
+  sudo make install
 
 
 Security
