@@ -69,7 +69,7 @@ static const int fHaveUPnP = true;
 #else
 static const int fHaveUPnP = false;
 #endif
-
+int64 GetBlockValue(int nHeight, int64 nFees);
 
 extern CScript COINBASE_FLAGS;
 
@@ -1687,6 +1687,9 @@ public:
 
     // height of the entry in the chain. The genesis block has height 0
     int nHeight;
+    
+    // track money supply
+    int64_t nMoneySupply;
 
     // Which # file this block is stored in (blk?????.dat)
     int nFile;
@@ -1724,6 +1727,7 @@ public:
         pprev = NULL;
         pnext = NULL;
         nHeight = 0;
+        nMoneySupply = 0;
         nFile = 0;
         nDataPos = 0;
         nUndoPos = 0;
@@ -1745,6 +1749,7 @@ public:
         pprev = NULL;
         pnext = NULL;
         nHeight = 0;
+        nMoneySupply = 0;
         nFile = 0;
         nDataPos = 0;
         nUndoPos = 0;
@@ -1865,10 +1870,11 @@ public:
     std::string ToString() const; //moved code to main.cpp because new method required access to auxpow
 #if 0
     {
-        return strprintf("CBlockIndex(pprev=%p, pnext=%p, nHeight=%d, merkle=%s, hashBlock=%s)",
+        return strprintf("CBlockIndex(pprev=%p, pnext=%p, nHeight=%d, merkle=%s, hashBlock=%s, nMoneySupply=%s)",
             pprev, pnext, nHeight,
             hashMerkleRoot.ToString().c_str(),
-            GetBlockHash().ToString().c_str());
+            GetBlockHash().ToString().c_str(),
+            FormatMoney(nMoneySupply).c_str());
     }
 #endif
 
