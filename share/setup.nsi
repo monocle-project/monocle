@@ -5,7 +5,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.8.7.3
+!define VERSION 0.8.99.0
 !define COMPANY "Monocle project"
 !define URL http://www.monocle.org/
 
