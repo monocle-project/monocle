@@ -38,6 +38,7 @@ namespace boost {
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include <stdarg.h>
 
@@ -196,6 +197,14 @@ uint256 GetRandHash()
     uint256 hash;
     RAND_bytes((unsigned char*)&hash, sizeof(hash));
     return hash;
+}
+
+void GetRandBytes(unsigned char* buf, int num)
+{
+    if (RAND_bytes(buf, num) != 1) {
+        printf("%s: OpenSSL RAND_bytes() failed with error: %s\n", __func__, ERR_error_string(ERR_get_error(), NULL));
+        assert(false);
+    }
 }
 
 

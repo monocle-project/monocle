@@ -7,9 +7,6 @@
 #include "stealth.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/random_device.hpp>
 
 hash_digest bitcoin_hash(const data_chunk& chunk)
 {
@@ -110,20 +107,15 @@ bool stealth_address::set_encoded(const std::string& encoded_address)
 
 ec_secret generate_random_secret()
 {
-    using namespace boost::random;
-    random_device rd;
-    mt19937 generator(rd());
-    uniform_int_distribution<uint8_t> dist(0, std::numeric_limits<uint8_t>::max());
     ec_secret secret;
-    for (uint8_t& byte: secret)
-        byte = dist(generator);
+    GetRandBytes(static_cast<unsigned char*>(&secret[0]), secret.size());
     return secret;
 }
 
 bool ec_multiply(ec_point& a, const ec_secret& b)
 {
-    init.init();
-    return secp256k1_ecdsa_pubkey_tweak_mul(a.data(), a.size(), b.data());
+    init.init(SECP256K1_START_VERIFY);
+    return secp256k1_ec_pubkey_tweak_mul(a.data(), a.size(), b.data());
 }
 
 hash_digest sha256_hash(const data_chunk& chunk)
@@ -145,21 +137,21 @@ ec_secret shared_secret(const ec_secret& secret, ec_point point)
 
 bool ec_tweak_add(ec_point& a, const ec_secret& b)
 {
-    init.init();
-    return secp256k1_ecdsa_pubkey_tweak_add(a.data(), a.size(), b.data());
+    init.init(SECP256K1_START_VERIFY);
+    return secp256k1_ec_pubkey_tweak_add(a.data(), a.size(), b.data());
 }
 
 ec_point secret_to_public_key(const ec_secret& secret,
     bool compressed)
 {
-    init.init();
+    init.init(SECP256K1_START_SIGN);
     size_t size = ec_uncompressed_size;
     if (compressed)
         size = ec_compressed_size;
 
     ec_point out(size);
     int out_size;
-    if (!secp256k1_ecdsa_pubkey_create(out.data(), &out_size, secret.data(),
+    if (!secp256k1_ec_pubkey_create(out.data(), &out_size, secret.data(),
             compressed))
         return ec_point();
     assert(size == static_cast<size_t>(out_size));
@@ -276,8 +268,8 @@ ec_point uncover_stealth(
 
 bool ec_add(ec_secret& a, const ec_secret& b)
 {
-    init.init();
-    return secp256k1_ecdsa_privkey_tweak_add(a.data(), b.data());
+    init.init(SECP256K1_START_VERIFY);
+    return secp256k1_ec_privkey_tweak_add(a.data(), b.data());
 }
 
 ec_secret uncover_stealth_secret(
