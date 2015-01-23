@@ -1926,6 +1926,7 @@ public:
             READWRITE(VARINT(nVersion));
 
         READWRITE(VARINT(nHeight));
+        READWRITE(nMoneySupply);
         READWRITE(VARINT(nTx));
 
         // block header
