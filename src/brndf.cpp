@@ -1,4 +1,5 @@
 #include "brndf.h"
+#include "fixed.h"
 
 uint32_t BRNDF(const CBlockIndex* pindexLast, 
                           uint32_t TargetBlocksSpacingSeconds, 
@@ -9,7 +10,7 @@ uint32_t BRNDF(const CBlockIndex* pindexLast,
     const CBlockIndex *BlockLastSolved = pindexLast;
     const CBlockIndex *BlockReading    = pindexLast;
 
-    typedef Fixed<32, 32> fixed;
+    typedef numeric::Fixed<32, 32> fixed;
 
     uint32_t     nPastBlocks               = 0;
     int32_t      nActualSeconds            = 0;

@@ -1,5 +1,8 @@
 #ifndef KIMOTO_GRAVITY_WELL_H
 #define KIMOTO_GRAVITY_WELL_H
+
+#include "main.h"
+
 #ifndef _WIN32
 #include <stdint.h>
 #else

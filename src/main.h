@@ -71,6 +71,9 @@ static const int fHaveUPnP = false;
 #endif
 int64 GetBlockValue(int nHeight, int64 nFees);
 
+/** The minimum valid difficulty */
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
+
 extern CScript COINBASE_FLAGS;
 
 
