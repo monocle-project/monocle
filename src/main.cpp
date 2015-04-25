@@ -411,7 +411,7 @@ bool CTransaction::IsStandard(string& strReason) const
         }
     }
     unsigned int nDataOut = 0;
-    txnouttype whichType;
+    txnouttype whichType = TX_NONSTANDARD;
     BOOST_FOREACH(const CTxOut& txout, vout) {
         if (!::IsStandard(txout.scriptPubKey)) {
             strReason = "scriptpubkey";
