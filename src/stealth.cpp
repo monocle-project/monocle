@@ -114,7 +114,7 @@ ec_secret generate_random_secret()
 
 bool ec_multiply(ec_point& a, const ec_secret& b)
 {
-    init.init(SECP256K1_START_VERIFY);
+    init.init(SECP256K1_CONTEXT_VERIFY);
     return secp256k1_ec_pubkey_tweak_mul(init.context(), a.data(), a.size(), b.data());
 }
 
@@ -137,14 +137,14 @@ ec_secret shared_secret(const ec_secret& secret, ec_point point)
 
 bool ec_tweak_add(ec_point& a, const ec_secret& b)
 {
-    init.init(SECP256K1_START_VERIFY);
+    init.init(SECP256K1_CONTEXT_VERIFY);
     return secp256k1_ec_pubkey_tweak_add(init.context(), a.data(), a.size(), b.data());
 }
 
 ec_point secret_to_public_key(const ec_secret& secret,
     bool compressed)
 {
-    init.init(SECP256K1_START_SIGN);
+    init.init(SECP256K1_CONTEXT_SIGN);
     size_t size = ec_uncompressed_size;
     if (compressed)
         size = ec_compressed_size;
@@ -268,7 +268,7 @@ ec_point uncover_stealth(
 
 bool ec_add(ec_secret& a, const ec_secret& b)
 {
-    init.init(SECP256K1_START_VERIFY);
+    init.init(SECP256K1_CONTEXT_VERIFY);
     return secp256k1_ec_privkey_tweak_add(init.context(), a.data(), b.data());
 }
 

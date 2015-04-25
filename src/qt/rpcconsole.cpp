@@ -3,10 +3,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "rpcconsole.h"
+
 #include "ui_rpcconsole.h"
 
 #include "clientmodel.h"
+#ifndef Q_MOC_RUN
 #include "bitcoinrpc.h"
+#endif
 #include "guiutil.h"
 
 #include <QTime>
