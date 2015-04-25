@@ -141,23 +141,26 @@ ec_secret generate_random_secret();
 class init_singleton
 {
 public:
-    init_singleton()
-      : init_done_(false)
-    {}
+    init_singleton() : init_done_(false) {}
+      
     ~init_singleton()
     {
         if (init_done_)
-            secp256k1_stop();
+            secp256k1_context_destroy(ctx);
     }
+    
     void init(int flags)
     {
         if (init_done_)
             return;
-        secp256k1_start(flags);
+        ctx = secp256k1_context_create(flags);
         init_done_ = true;
     }
+    
+    const secp256k1_context_t* context() const { return ctx; }
 
 private:
+    secp256k1_context_t* ctx;
     bool init_done_;
 };
 
