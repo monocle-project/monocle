@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <boost/assign/list_of.hpp>
-
+#include <boost/version.hpp>
 #include "base58.h"
 #include "bitcoinrpc.h"
 #include "db.h"
@@ -239,7 +239,11 @@ Value listunspent(const Array& params, bool fHelp)
             CTxDestination address;
             if (ExtractDestination(pk, address))
             {
+#if BOOST_VERSION >= 105800
+                const CScriptID& hash = boost::relaxed_get<const CScriptID&>(address);
+#else
                 const CScriptID& hash = boost::get<const CScriptID&>(address);
+#endif
                 CScript redeemScript;
                 if (pwalletMain->GetCScript(hash, redeemScript))
                     entry.push_back(Pair("redeemScript", HexStr(redeemScript.begin(), redeemScript.end())));
